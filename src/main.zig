@@ -14,7 +14,7 @@ pub fn main() !void {
     std.debug.assert(sdl_init == 0);
 
     const window = c.SDL_CreateWindow(
-        "mjk-editor",
+        "mjk",
         c.SDL_WINDOWPOS_UNDEFINED,
         c.SDL_WINDOWPOS_UNDEFINED,
         800,
@@ -23,5 +23,19 @@ pub fn main() !void {
     ) orelse std.debug.panic("Failed to create window", .{});
 
     _ = window;
-    while (true) {}
+
+    var event: c.SDL_Event = undefined;
+    var running = true;
+    while (running) {
+        while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
+            if (event.type == c.SDL_QUIT) {
+                running = false;
+            } else if (event.type == c.SDL_KEYDOWN) {
+                switch (event.key.keysym.sym) {
+                    c.SDLK_ESCAPE => running = false,
+                    else => std.debug.print("unhandled key down event\n", .{}),
+                }
+            }
+        }
+    }
 }
