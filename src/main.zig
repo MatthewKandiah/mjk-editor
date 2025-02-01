@@ -1,17 +1,23 @@
 const std = @import("std");
 const lib = @import("./lib.zig");
-const c = @cImport(
-    @cInclude("SDL2/SDL.h"),
-);
+const c = @cImport({
+    @cInclude("SDL2/SDL.h");
+    @cInclude("SDL2/SDL_ttf.h");
+});
 
 pub fn main() !void {
-    const a = 1;
-    const b = 2;
-    const d = lib.add(a, b);
-    std.debug.print("{} + {} = {}\n", .{ a, b, d });
-
     const sdl_init = c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_EVENTS);
     std.debug.assert(sdl_init == 0);
+
+    const ttf_init = c.TTF_Init();
+    std.debug.assert(ttf_init == 0);
+
+    const jetbrains_mono_font = c.TTF_OpenFont("./font/jetbrains-mono/JetBrainsMono-Regular.ttf", 24) orelse std.debug.panic("Failed to load font\n", .{});
+    defer c.TTF_CloseFont(jetbrains_mono_font);
+
+    const colour = c.SDL_Color{ .r = 0, .g = 255, .b = 0, .a = 0 };
+    const text_surface = c.TTF_RenderText_Solid(jetbrains_mono_font, "Hello TTF", colour);
+    std.debug.print("text_surface: {}\n", .{text_surface.*});
 
     const window = c.SDL_CreateWindow(
         "mjk",
@@ -21,8 +27,21 @@ pub fn main() !void {
         600,
         c.SDL_WINDOW_RESIZABLE,
     ) orelse std.debug.panic("Failed to create window", .{});
+    const window_surface = c.SDL_GetWindowSurface(window);
 
-    _ = window;
+    const src_rect: ?c.SDL_Rect = text_surface.*.clip_rect;
+    var dst_rect: ?c.SDL_Rect = text_surface.*.clip_rect;
+    const blit_res = c.SDL_BlitSurface(
+        text_surface,
+        @ptrCast(&src_rect),
+        window_surface,
+        @ptrCast(&dst_rect),
+    );
+    std.debug.assert(blit_res == 0);
+
+    const update_res = c.SDL_UpdateWindowSurface(window);
+    std.debug.assert(update_res == 0);
+    std.debug.print("update_res: {}\n", .{update_res});
 
     var event: c.SDL_Event = undefined;
     var running = true;
