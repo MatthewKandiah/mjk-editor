@@ -19,5 +19,3 @@ I __think__ we get these things for free by using SDL. That might not be true. T
 - manually handle blitting displayed characters to screen
 - [rope data structure](https://en.wikipedia.org/wiki/Rope_(data_structure)) - might be needed for efficient handling of large files
 
-## NOTES
-- vendored in static SDL3 library, built from commit 17c4bdd754e860f166bdd2090c3d8a346a1a2bba
