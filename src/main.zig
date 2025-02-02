@@ -67,7 +67,7 @@ pub fn main() !void {
                 switch (event.key.keysym.sym) {
                     c.SDLK_ESCAPE => running = false,
                     c.SDLK_DOWN => handleMoveDown(lines, &cursor_pos),
-                    c.SDLK_UP => handleMoveUp(&cursor_pos),
+                    c.SDLK_UP => handleMoveUp(lines, &cursor_pos),
                     c.SDLK_RIGHT => handleMoveRight(lines, &cursor_pos),
                     c.SDLK_LEFT => handleMoveLeft(&cursor_pos),
                     else => std.debug.print("unhandled key down event\n", .{}),
@@ -141,14 +141,20 @@ pub fn handleMoveLeft(cursor_pos: *Pos) void {
         cursor_pos.*.x -= 1;
     }
 }
-pub fn handleMoveUp(cursor_pos: *Pos) void {
+pub fn handleMoveUp(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
     if (cursor_pos.*.y > 0) {
         cursor_pos.*.y -= 1;
+    }
+    if (lines.items[cursor_pos.*.y].len <= cursor_pos.*.x) {
+        cursor_pos.*.x = lines.items[cursor_pos.*.y].len - 1;
     }
 }
 pub fn handleMoveDown(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
     if (lines.items.len > cursor_pos.*.y + 1) {
         cursor_pos.*.y += 1;
+    }
+    if (lines.items[cursor_pos.*.y].len <= cursor_pos.*.x) {
+        cursor_pos.*.x = lines.items[cursor_pos.*.y].len - 1;
     }
 }
 
