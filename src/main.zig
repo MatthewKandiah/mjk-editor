@@ -5,18 +5,6 @@ const c = @cImport({
     @cInclude("SDL2/SDL_ttf.h");
 });
 
-pub fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
-    std.debug.print(fmt, args);
-    std.debug.print("\n", .{});
-    std.process.exit(1);
-}
-
-pub fn assert(condition: bool, comptime fmt: []const u8, args: anytype) void {
-    if (!condition) {
-        fatal(fmt, args);
-    }
-}
-
 pub fn main() !void {
     const sdl_init = c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_EVENTS);
     assert(sdl_init == 0, "ERROR - SDL_Init failed: {}", .{sdl_init});
@@ -27,8 +15,9 @@ pub fn main() !void {
     const jetbrains_mono_font = c.TTF_OpenFont("./font/jetbrains-mono/JetBrainsMono-Regular.ttf", 24) orelse fatal("ERROR - Loading JetBrainsMono font failed", .{});
     defer c.TTF_CloseFont(jetbrains_mono_font);
 
-    const colour = c.SDL_Color{ .r = 0, .g = 255, .b = 0, .a = 0 };
-    const text_surface = c.TTF_RenderText_Solid(jetbrains_mono_font, "Hello TTF", colour);
+    const fg_colour = c.SDL_Color{ .r = 0, .g = 255, .b = 0, .a = 0 };
+    const bg_colour = c.SDL_Color{ .r = 64, .g = 64, .b = 64, .a = 0 };
+    const text_surface = c.TTF_RenderText_Solid(jetbrains_mono_font, "Hello TTF", fg_colour);
 
     const window = c.SDL_CreateWindow(
         "mjk",
@@ -63,6 +52,17 @@ pub fn main() !void {
             .w = src_rect.w,
             .h = src_rect.h,
         };
+        const fill_res = c.SDL_FillRect(
+            window_surface,
+            @ptrCast(&window_surface.*.clip_rect),
+            c.SDL_MapRGB(
+                window_surface.*.format,
+                bg_colour.r,
+                bg_colour.g,
+                bg_colour.b,
+            ),
+        );
+        assert(fill_res == 0, "ERROR - SDL_FillRect failed: {}", .{fill_res});
         const blit_res = c.SDL_BlitSurface(
             text_surface,
             @ptrCast(&src_rect),
@@ -73,5 +73,17 @@ pub fn main() !void {
 
         const update_res = c.SDL_UpdateWindowSurface(window);
         assert(update_res == 0, "ERROR - SDL_UpdateWindowSurface failed: {}", .{update_res});
+    }
+}
+
+pub fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
+    std.debug.print(fmt, args);
+    std.debug.print("\n", .{});
+    std.process.exit(1);
+}
+
+pub fn assert(condition: bool, comptime fmt: []const u8, args: anytype) void {
+    if (!condition) {
+        fatal(fmt, args);
     }
 }
