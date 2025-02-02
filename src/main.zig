@@ -15,14 +15,21 @@ pub fn main() !void {
     const file = try std.fs.cwd().openFile("test.txt", std.fs.File.OpenFlags{ .mode = .read_write });
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
-    const file_contents = try file.readToEndAllocOptions(allocator, 10_000, null, 1, 0);
+
+    var lines = std.ArrayList([:0]u8).init(allocator);
+    var file_reader = file.reader();
+    while (try file_reader.readUntilDelimiterOrEofAlloc(allocator, '\n', 1_000)) |line| {
+        const fixed_line = try allocator.allocSentinel(u8, line.len, 0);
+        std.mem.copyForwards(u8, fixed_line, line);
+        try lines.append(fixed_line);
+    }
 
     const jetbrains_mono_font = c.TTF_OpenFont("./font/jetbrains-mono/JetBrainsMono-Regular.ttf", 24) orelse fatal("ERROR - Loading JetBrainsMono font failed", .{});
     defer c.TTF_CloseFont(jetbrains_mono_font);
 
     const fg_colour = c.SDL_Color{ .r = 0, .g = 255, .b = 0, .a = 0 };
     const bg_colour = c.SDL_Color{ .r = 64, .g = 64, .b = 64, .a = 0 };
-    const text_surface = c.TTF_RenderText_Solid(jetbrains_mono_font, @ptrCast(file_contents), fg_colour);
+    const text_surface = c.TTF_RenderText_Solid(jetbrains_mono_font, @ptrCast(lines.getLast()), fg_colour);
 
     const window = c.SDL_CreateWindow(
         "mjk",
