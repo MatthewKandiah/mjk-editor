@@ -35,8 +35,6 @@ pub fn main() !void {
     const size_test_surface = c.TTF_RenderText_Solid(ubuntu_mono_font, "a", fg_colour);
     const ubuntu_mono_font_height: usize = @intCast(size_test_surface.*.h);
     const ubuntu_mono_font_width: usize = @intCast(size_test_surface.*.w);
-    std.debug.print("ubuntu height: {}\n", .{ubuntu_mono_font_height});
-    std.debug.print("ubuntu width: {}\n", .{ubuntu_mono_font_width});
     defer c.TTF_CloseFont(ubuntu_mono_font);
 
     const window = c.SDL_CreateWindow(
