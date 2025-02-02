@@ -29,7 +29,6 @@ pub fn main() !void {
 
     const fg_colour = c.SDL_Color{ .r = 0, .g = 255, .b = 0, .a = 0 };
     const bg_colour = c.SDL_Color{ .r = 64, .g = 64, .b = 64, .a = 0 };
-    const text_surface = c.TTF_RenderText_Solid(jetbrains_mono_font, @ptrCast(lines.getLast()), fg_colour);
 
     const window = c.SDL_CreateWindow(
         "mjk",
@@ -57,13 +56,6 @@ pub fn main() !void {
             }
         }
 
-        const src_rect = text_surface.*.clip_rect;
-        var dst_rect = c.SDL_Rect{
-            .x = @divTrunc(window_surface.*.w, 2) - @divTrunc(text_surface.*.w, 2),
-            .y = @divTrunc(window_surface.*.h, 2) - @divTrunc(text_surface.*.h, 2),
-            .w = src_rect.w,
-            .h = src_rect.h,
-        };
         const fill_res = c.SDL_FillRect(
             window_surface,
             @ptrCast(&window_surface.*.clip_rect),
@@ -75,13 +67,23 @@ pub fn main() !void {
             ),
         );
         assert(fill_res == 0, "ERROR - SDL_FillRect failed: {}", .{fill_res});
-        const blit_res = c.SDL_BlitSurface(
-            text_surface,
-            @ptrCast(&src_rect),
-            window_surface,
-            @ptrCast(&dst_rect),
-        );
-        assert(blit_res == 0, "ERROR - SDL_BlibSurface failed: {}", .{blit_res});
+        for (lines.items, 0..) |line, i| {
+            const text_surface = c.TTF_RenderText_Solid(jetbrains_mono_font, @ptrCast(line), fg_colour);
+            const src_rect = text_surface.*.clip_rect;
+            var dst_rect = c.SDL_Rect{
+                .x = 0,
+                .y = text_surface.*.h * @as(c_int, @intCast(i)),
+                .w = src_rect.w,
+                .h = src_rect.h,
+            };
+            const blit_res = c.SDL_BlitSurface(
+                text_surface,
+                @ptrCast(&src_rect),
+                window_surface,
+                @ptrCast(&dst_rect),
+            );
+            assert(blit_res == 0, "ERROR - SDL_BlibSurface failed: {}", .{blit_res});
+        }
 
         const update_res = c.SDL_UpdateWindowSurface(window);
         assert(update_res == 0, "ERROR - SDL_UpdateWindowSurface failed: {}", .{update_res});
