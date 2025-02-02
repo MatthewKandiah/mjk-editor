@@ -5,9 +5,13 @@ const c = @cImport({
     @cInclude("SDL2/SDL_ttf.h");
 });
 
-const fg_colour = c.SDL_Color{ .r = 0, .g = 255, .b = 0, .a = 0 };
-const bg_colour = c.SDL_Color{ .r = 64, .g = 64, .b = 64, .a = 0 };
-const cursor_bg_colour = c.SDL_Color{ .r = 122, .g = 122, .b = 0, .a = 0 };
+// TODO-Matt: Ignoring the complexity that UTF-8 characters may be encoded as several bytes
+// I think this means I'll be fine using ASCII characters, but will break if you add an emoji
+// std.unicode probably has all the tools needed to deal with UTF-8 properly
+
+const fg_colour = c.SDL_Color{ .r = 255, .g = 255, .b = 255, .a = 0 };
+const bg_colour = c.SDL_Color{ .r = 0, .g = 0, .b = 64, .a = 0 };
+const cursor_bg_colour = c.SDL_Color{ .r = 122, .g = 0, .b = 0, .a = 0 };
 
 pub fn main() !void {
     const sdl_init = c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_EVENTS);
@@ -49,8 +53,10 @@ pub fn main() !void {
 
     var event: c.SDL_Event = undefined;
     var running = true;
-    var cursor_x: usize = 0;
-    var cursor_y: usize = 0;
+    var cursor_pos = Pos{
+        .x = 0,
+        .y = 0,
+    };
     while (running) {
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
             if (event.type == c.SDL_QUIT) {
@@ -60,10 +66,10 @@ pub fn main() !void {
             } else if (event.type == c.SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
                     c.SDLK_ESCAPE => running = false,
-                    c.SDLK_DOWN => cursor_y += 1,
-                    c.SDLK_UP => cursor_y -= 1,
-                    c.SDLK_RIGHT => cursor_x += 1,
-                    c.SDLK_LEFT => cursor_x -= 1,
+                    c.SDLK_DOWN => handleMoveDown(lines, &cursor_pos),
+                    c.SDLK_UP => handleMoveUp(&cursor_pos),
+                    c.SDLK_RIGHT => handleMoveRight(lines, &cursor_pos),
+                    c.SDLK_LEFT => handleMoveLeft(&cursor_pos),
                     else => std.debug.print("unhandled key down event\n", .{}),
                 }
             }
@@ -81,8 +87,8 @@ pub fn main() !void {
         );
         assert(fill_res == 0, "ERROR - SDL_FillRect failed: {}", .{fill_res});
         const cursor_rect = c.SDL_Rect{
-            .x = @intCast(ubuntu_mono_font_width * cursor_x),
-            .y = @intCast(ubuntu_mono_font_height * cursor_y),
+            .x = @intCast(ubuntu_mono_font_width * cursor_pos.x),
+            .y = @intCast(ubuntu_mono_font_height * cursor_pos.y),
             .w = @intCast(ubuntu_mono_font_width),
             .h = @intCast(ubuntu_mono_font_height),
         };
@@ -117,6 +123,32 @@ pub fn main() !void {
 
         const update_res = c.SDL_UpdateWindowSurface(window);
         assert(update_res == 0, "ERROR - SDL_UpdateWindowSurface failed: {}", .{update_res});
+    }
+}
+
+pub const Pos = struct {
+    x: usize,
+    y: usize,
+};
+
+pub fn handleMoveRight(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
+    if (lines.items[cursor_pos.*.y].len > cursor_pos.*.x + 1) {
+        cursor_pos.*.x += 1;
+    }
+}
+pub fn handleMoveLeft(cursor_pos: *Pos) void {
+    if (cursor_pos.*.x > 0) {
+        cursor_pos.*.x -= 1;
+    }
+}
+pub fn handleMoveUp(cursor_pos: *Pos) void {
+    if (cursor_pos.*.y > 0) {
+        cursor_pos.*.y -= 1;
+    }
+}
+pub fn handleMoveDown(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
+    if (lines.items.len > cursor_pos.*.y + 1) {
+        cursor_pos.*.y += 1;
     }
 }
 
