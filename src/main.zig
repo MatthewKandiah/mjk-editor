@@ -29,8 +29,13 @@ pub fn main() !void {
     ) orelse std.debug.panic("Failed to create window", .{});
     const window_surface = c.SDL_GetWindowSurface(window);
 
-    const src_rect: ?c.SDL_Rect = text_surface.*.clip_rect;
-    var dst_rect: ?c.SDL_Rect = text_surface.*.clip_rect;
+    const src_rect = text_surface.*.clip_rect;
+    var dst_rect = c.SDL_Rect{
+        .x = @divTrunc(window_surface.*.w, 2) - @divTrunc(text_surface.*.w, 2),
+        .y = @divTrunc(window_surface.*.h, 2) - @divTrunc(text_surface.*.h, 2),
+        .w = src_rect.w,
+        .h = src_rect.h,
+    };
     const blit_res = c.SDL_BlitSurface(
         text_surface,
         @ptrCast(&src_rect),
