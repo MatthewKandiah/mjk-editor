@@ -27,26 +27,7 @@ pub fn main() !void {
         600,
         c.SDL_WINDOW_RESIZABLE,
     ) orelse std.debug.panic("Failed to create window", .{});
-    const window_surface = c.SDL_GetWindowSurface(window);
-
-    const src_rect = text_surface.*.clip_rect;
-    var dst_rect = c.SDL_Rect{
-        .x = @divTrunc(window_surface.*.w, 2) - @divTrunc(text_surface.*.w, 2),
-        .y = @divTrunc(window_surface.*.h, 2) - @divTrunc(text_surface.*.h, 2),
-        .w = src_rect.w,
-        .h = src_rect.h,
-    };
-    const blit_res = c.SDL_BlitSurface(
-        text_surface,
-        @ptrCast(&src_rect),
-        window_surface,
-        @ptrCast(&dst_rect),
-    );
-    std.debug.assert(blit_res == 0);
-
-    const update_res = c.SDL_UpdateWindowSurface(window);
-    std.debug.assert(update_res == 0);
-    std.debug.print("update_res: {}\n", .{update_res});
+    var window_surface = c.SDL_GetWindowSurface(window);
 
     var event: c.SDL_Event = undefined;
     var running = true;
@@ -54,6 +35,8 @@ pub fn main() !void {
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
             if (event.type == c.SDL_QUIT) {
                 running = false;
+            } else if (event.type == c.SDL_WINDOWEVENT) {
+                window_surface = c.SDL_GetWindowSurface(window);
             } else if (event.type == c.SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
                     c.SDLK_ESCAPE => running = false,
@@ -61,5 +44,24 @@ pub fn main() !void {
                 }
             }
         }
+
+        const src_rect = text_surface.*.clip_rect;
+        var dst_rect = c.SDL_Rect{
+            .x = @divTrunc(window_surface.*.w, 2) - @divTrunc(text_surface.*.w, 2),
+            .y = @divTrunc(window_surface.*.h, 2) - @divTrunc(text_surface.*.h, 2),
+            .w = src_rect.w,
+            .h = src_rect.h,
+        };
+        const blit_res = c.SDL_BlitSurface(
+            text_surface,
+            @ptrCast(&src_rect),
+            window_surface,
+            @ptrCast(&dst_rect),
+        );
+        std.debug.assert(blit_res == 0);
+
+        const update_res = c.SDL_UpdateWindowSurface(window);
+        std.debug.print("update_res: {}\n", .{update_res});
+        std.debug.assert(update_res == 0);
     }
 }
