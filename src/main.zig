@@ -70,6 +70,9 @@ pub fn main() !void {
                     c.SDLK_UP => handleMoveUp(lines, &cursor_pos),
                     c.SDLK_RIGHT => handleMoveRight(lines, &cursor_pos),
                     c.SDLK_LEFT => handleMoveLeft(&cursor_pos),
+                    c.SDLK_a => {
+                        // TODO-Matt: make lines an ArrayList of ArrayLists
+                    },
                     else => std.debug.print("unhandled key down event\n", .{}),
                 }
             }
@@ -86,6 +89,7 @@ pub fn main() !void {
             ),
         );
         assert(fill_res == 0, "ERROR - SDL_FillRect failed: {}", .{fill_res});
+
         const cursor_rect = c.SDL_Rect{
             .x = @intCast(ubuntu_mono_font_width * cursor_pos.x),
             .y = @intCast(ubuntu_mono_font_height * cursor_pos.y),
@@ -103,6 +107,7 @@ pub fn main() !void {
             ),
         );
         assert(cursor_fill_res == 0, "ERROR - SDL_FillRect for cursor bg failed: {}", .{cursor_fill_res});
+
         for (lines.items, 0..) |line, i| {
             const text_surface = c.TTF_RenderText_Solid(ubuntu_mono_font, @ptrCast(line), fg_colour);
             const src_rect = text_surface.*.clip_rect;
@@ -136,11 +141,13 @@ pub fn handleMoveRight(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
         cursor_pos.*.x += 1;
     }
 }
+
 pub fn handleMoveLeft(cursor_pos: *Pos) void {
     if (cursor_pos.*.x > 0) {
         cursor_pos.*.x -= 1;
     }
 }
+
 pub fn handleMoveUp(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
     if (cursor_pos.*.y > 0) {
         cursor_pos.*.y -= 1;
@@ -149,6 +156,7 @@ pub fn handleMoveUp(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
         cursor_pos.*.x = lines.items[cursor_pos.*.y].len - 1;
     }
 }
+
 pub fn handleMoveDown(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
     if (lines.items.len > cursor_pos.*.y + 1) {
         cursor_pos.*.y += 1;
