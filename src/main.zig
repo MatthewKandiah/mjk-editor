@@ -12,12 +12,17 @@ pub fn main() !void {
     const ttf_init = c.TTF_Init();
     assert(ttf_init == 0, "ERROR - TTF_Init failed: {}", .{ttf_init});
 
+    const file = try std.fs.cwd().openFile("test.txt", std.fs.File.OpenFlags{ .mode = .read_write });
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    const file_contents = try file.readToEndAllocOptions(allocator, 10_000, null, 1, 0);
+
     const jetbrains_mono_font = c.TTF_OpenFont("./font/jetbrains-mono/JetBrainsMono-Regular.ttf", 24) orelse fatal("ERROR - Loading JetBrainsMono font failed", .{});
     defer c.TTF_CloseFont(jetbrains_mono_font);
 
     const fg_colour = c.SDL_Color{ .r = 0, .g = 255, .b = 0, .a = 0 };
     const bg_colour = c.SDL_Color{ .r = 64, .g = 64, .b = 64, .a = 0 };
-    const text_surface = c.TTF_RenderText_Solid(jetbrains_mono_font, "Hello TTF", fg_colour);
+    const text_surface = c.TTF_RenderText_Solid(jetbrains_mono_font, @ptrCast(file_contents), fg_colour);
 
     const window = c.SDL_CreateWindow(
         "mjk",
