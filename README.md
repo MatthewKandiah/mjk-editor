@@ -5,13 +5,13 @@
 - Shell integration, want to be able to easily send input from buffer to shell command, and take output from shell command and write to (current or new) buffer
 
 ## TODO
-- Open a window 
-- Handle window close events
-- Handle window resizing
-- Display a hardcoded string in the middle of that window
-- Handle keyboard inputs for editing the displayed string
-- Read a file in
-- Write buffer to file
+- [x] Open a window
+- [x] Handle window close events
+- [x] Handle window resizing
+- [x] Display a hardcoded string in the middle of that window
+- [ ] Handle keyboard inputs for editing the displayed string
+- [ ] Read a file in
+- [ ] Write buffer to file
 
 ## DEFERRED
 I __think__ we get these things for free by using SDL. That might not be true. They might be fun to do from scratch later.
