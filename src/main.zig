@@ -24,18 +24,22 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    var lines = std.ArrayList([:0]u8).init(allocator);
+    var lines = std.ArrayList(std.ArrayList(u8)).init(allocator);
     var file_reader = file.reader();
     // TODO-Matt: slightly odd to just crash on a long line, would be nice to handle failure more gracefully
     while (try file_reader.readUntilDelimiterOrEofAlloc(allocator, '\n', 1_000)) |line| {
-        const fixed_line = try allocator.allocSentinel(u8, line.len, 0);
-        std.mem.copyForwards(u8, fixed_line, line);
-        try lines.append(fixed_line);
+        var alloc_line = try allocator.alloc(u8, line.len + 1);
+        std.mem.copyForwards(u8, alloc_line, line);
+        // append null byte because TTF rendering expects a null-terminated c string
+        alloc_line[line.len] = 0;
+        const line_array_list = std.ArrayList(u8).fromOwnedSlice(allocator, alloc_line);
+        try lines.append(line_array_list);
     }
 
     const ubuntu_mono_font = c.TTF_OpenFont("./font/ubuntu-mono/ubuntu_mono.ttf", 24) orelse fatal("ERROR - Loading Ubuntu Mono font failed", .{});
     const fixed_width_res = c.TTF_FontFaceIsFixedWidth(ubuntu_mono_font);
     assert(fixed_width_res != 0, "ERROR - Only fixed width fonts supported", .{});
+
     const size_test_surface = c.TTF_RenderText_Solid(ubuntu_mono_font, "a", fg_colour);
     const ubuntu_mono_font_height: usize = @intCast(size_test_surface.*.h);
     const ubuntu_mono_font_width: usize = @intCast(size_test_surface.*.w);
@@ -70,9 +74,7 @@ pub fn main() !void {
                     c.SDLK_UP => handleMoveUp(lines, &cursor_pos),
                     c.SDLK_RIGHT => handleMoveRight(lines, &cursor_pos),
                     c.SDLK_LEFT => handleMoveLeft(&cursor_pos),
-                    c.SDLK_a => {
-                        // TODO-Matt: make lines an ArrayList of ArrayLists
-                    },
+                    c.SDLK_a => try insert(lines, &cursor_pos, 'a'),
                     else => std.debug.print("unhandled key down event\n", .{}),
                 }
             }
@@ -109,7 +111,7 @@ pub fn main() !void {
         assert(cursor_fill_res == 0, "ERROR - SDL_FillRect for cursor bg failed: {}", .{cursor_fill_res});
 
         for (lines.items, 0..) |line, i| {
-            const text_surface = c.TTF_RenderText_Solid(ubuntu_mono_font, @ptrCast(line), fg_colour);
+            const text_surface = c.TTF_RenderText_Solid(ubuntu_mono_font, @ptrCast(line.items), fg_colour);
             const src_rect = text_surface.*.clip_rect;
             var dst_rect = c.SDL_Rect{
                 .x = 0,
@@ -136,8 +138,8 @@ pub const Pos = struct {
     y: usize,
 };
 
-pub fn handleMoveRight(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
-    if (lines.items[cursor_pos.*.y].len > cursor_pos.*.x + 1) {
+pub fn handleMoveRight(lines: std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos) void {
+    if (lines.items[cursor_pos.*.y].items.len > cursor_pos.*.x + 1) {
         cursor_pos.*.x += 1;
     }
 }
@@ -148,22 +150,27 @@ pub fn handleMoveLeft(cursor_pos: *Pos) void {
     }
 }
 
-pub fn handleMoveUp(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
+pub fn handleMoveUp(lines: std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos) void {
     if (cursor_pos.*.y > 0) {
         cursor_pos.*.y -= 1;
     }
-    if (lines.items[cursor_pos.*.y].len <= cursor_pos.*.x) {
-        cursor_pos.*.x = lines.items[cursor_pos.*.y].len - 1;
+    if (lines.items[cursor_pos.*.y].items.len <= cursor_pos.*.x) {
+        cursor_pos.*.x = lines.items[cursor_pos.*.y].items.len - 1;
     }
 }
 
-pub fn handleMoveDown(lines: std.ArrayList([:0]u8), cursor_pos: *Pos) void {
+pub fn handleMoveDown(lines: std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos) void {
     if (lines.items.len > cursor_pos.*.y + 1) {
         cursor_pos.*.y += 1;
     }
-    if (lines.items[cursor_pos.*.y].len <= cursor_pos.*.x) {
-        cursor_pos.*.x = lines.items[cursor_pos.*.y].len - 1;
+    if (lines.items[cursor_pos.*.y].items.len <= cursor_pos.*.x) {
+        cursor_pos.*.x = lines.items[cursor_pos.*.y].items.len - 1;
     }
+}
+
+pub fn insert(lines: std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos, char: u8) !void {
+    try lines.items[cursor_pos.*.y].insert(cursor_pos.*.x, char);
+    cursor_pos.*.x += 1;
 }
 
 pub fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
