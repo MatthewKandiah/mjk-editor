@@ -85,6 +85,7 @@ pub fn main() !void {
                     c.SDLK_RIGHT => handleMoveRight(lines, &cursor_pos),
                     c.SDLK_LEFT => handleMoveLeft(&cursor_pos),
                     c.SDLK_RETURN => try addNewLine(allocator, &lines, &cursor_pos),
+                    c.SDLK_BACKSPACE => try handleBackSpace(&lines, &cursor_pos),
                     c.SDLK_SPACE => try insert(lines, &cursor_pos, ' '),
                     c.SDLK_PERIOD => try insert(lines, &cursor_pos, '.'),
                     c.SDLK_COMMA => try insert(lines, &cursor_pos, ','),
@@ -219,11 +220,32 @@ pub fn insert(lines: std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos, char: u
 }
 
 pub fn addNewLine(allocator: std.mem.Allocator, lines: *std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos) !void {
+    // TODO-Matt: This just inserts a new line, would be better to split current line and move second part onto new line
     var newLine = std.ArrayList(u8).init(allocator);
     try newLine.append(0);
     try lines.insert(cursor_pos.y + 1, newLine);
     cursor_pos.*.y += 1;
     cursor_pos.*.x = 0;
+}
+
+pub fn handleBackSpace(lines: *std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos) !void {
+    if (cursor_pos.x == 0 and cursor_pos.y == 0) {
+        return;
+    }
+
+    //FIXME - think we might be getting dangling null terminators making this not work
+    //also blows up with integer overflows on deleting empty lines
+    if (cursor_pos.x == 0) {
+        var removed_line = lines.orderedRemove(cursor_pos.y);
+        const removed_line_slice = try removed_line.toOwnedSlice();
+        cursor_pos.y -= 1;
+        cursor_pos.x = lines.items[cursor_pos.y].items.len - 1;
+        _ = lines.items[cursor_pos.y].pop(); // remove null terminator
+        try lines.items[cursor_pos.y].appendSlice(removed_line_slice);
+    }
+
+    _ = lines.items[cursor_pos.y].orderedRemove(cursor_pos.x - 1);
+    cursor_pos.x -= 1;
 }
 
 pub fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
