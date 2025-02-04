@@ -9,7 +9,7 @@
 - [x] Handle window close events
 - [x] Handle window resizing
 - [x] Display a hardcoded string in the middle of that window
-- [ ] Handle keyboard inputs for editing the displayed string
+- [x] Handle keyboard inputs for editing the displayed string
 - [x] Read a file in
 - [ ] Write buffer to file
 
