@@ -37,6 +37,11 @@ pub fn main() !void {
         const line_array_list = std.ArrayList(u8).fromOwnedSlice(allocator, alloc_line);
         try lines.append(line_array_list);
     }
+    if (lines.items.len == 0) {
+        var empty_line_array_list = std.ArrayList(u8).init(allocator);
+        try empty_line_array_list.append(0);
+        try lines.append(empty_line_array_list);
+    }
 
     const ubuntu_mono_font = c.TTF_OpenFont("./font/ubuntu-mono/ubuntu_mono.ttf", 24) orelse fatal("ERROR - Loading Ubuntu Mono font failed", .{});
     const fixed_width_res = c.TTF_FontFaceIsFixedWidth(ubuntu_mono_font);
