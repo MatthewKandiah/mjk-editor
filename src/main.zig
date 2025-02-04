@@ -20,7 +20,9 @@ pub fn main() !void {
     const ttf_init = c.TTF_Init();
     assert(ttf_init == 0, "ERROR - TTF_Init failed: {}", .{ttf_init});
 
-    const file = try std.fs.cwd().openFile("test.txt", std.fs.File.OpenFlags{ .mode = .read_write });
+    const file = try std.fs.cwd().openFile("debug/test.txt", std.fs.File.OpenFlags{ .mode = .read_write });
+    defer file.close();
+
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
@@ -69,7 +71,10 @@ pub fn main() !void {
                 window_surface = c.SDL_GetWindowSurface(window);
             } else if (event.type == c.SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
-                    c.SDLK_ESCAPE => running = false,
+                    c.SDLK_ESCAPE => {
+                        running = false;
+                        try writeToFile(file, lines);
+                    },
                     c.SDLK_DOWN => handleMoveDown(lines, &cursor_pos),
                     c.SDLK_UP => handleMoveUp(lines, &cursor_pos),
                     c.SDLK_RIGHT => handleMoveRight(lines, &cursor_pos),
@@ -225,5 +230,14 @@ pub fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
 pub fn assert(condition: bool, comptime fmt: []const u8, args: anytype) void {
     if (!condition) {
         fatal(fmt, args);
+    }
+}
+
+pub fn writeToFile(file: std.fs.File, lines: std.ArrayList(std.ArrayList(u8))) !void {
+    try file.seekTo(0);
+    try std.posix.ftruncate(file.handle, 0);
+    for (lines.items) |line| {
+        _ = try file.write(line.items[0 .. line.items.len - 1]);
+        _ = try file.write(&.{'\n'});
     }
 }
