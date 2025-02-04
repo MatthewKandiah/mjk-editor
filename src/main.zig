@@ -211,7 +211,7 @@ pub fn insert(lines: std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos, char: u
 pub fn addNewLine(allocator: std.mem.Allocator, lines: *std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos) !void {
     var newLine = std.ArrayList(u8).init(allocator);
     try newLine.append(0);
-    try lines.insert(cursor_pos.y+1, newLine);
+    try lines.insert(cursor_pos.y + 1, newLine);
     cursor_pos.*.y += 1;
     cursor_pos.*.x = 0;
 }
