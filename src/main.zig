@@ -74,6 +74,7 @@ pub fn main() !void {
                     c.SDLK_UP => handleMoveUp(lines, &cursor_pos),
                     c.SDLK_RIGHT => handleMoveRight(lines, &cursor_pos),
                     c.SDLK_LEFT => handleMoveLeft(&cursor_pos),
+                    c.SDLK_RETURN => try addNewLine(allocator, &lines, &cursor_pos),
                     c.SDLK_SPACE => try insert(lines, &cursor_pos, ' '),
                     c.SDLK_PERIOD => try insert(lines, &cursor_pos, '.'),
                     c.SDLK_COMMA => try insert(lines, &cursor_pos, ','),
@@ -139,7 +140,13 @@ pub fn main() !void {
         assert(cursor_fill_res == 0, "ERROR - SDL_FillRect for cursor bg failed: {}", .{cursor_fill_res});
 
         for (lines.items, 0..) |line, i| {
+            if (line.items.len == 1 and line.items[0] == 0) {
+                // empty line => draw nothing
+                continue;
+            }
             const text_surface = c.TTF_RenderText_Solid(ubuntu_mono_font, @ptrCast(line.items), fg_colour);
+            assert(text_surface != null, "ERROR - Failed to render text line {}\n", .{i});
+
             const src_rect = text_surface.*.clip_rect;
             var dst_rect = c.SDL_Rect{
                 .x = 0,
@@ -199,6 +206,14 @@ pub fn handleMoveDown(lines: std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos)
 pub fn insert(lines: std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos, char: u8) !void {
     try lines.items[cursor_pos.*.y].insert(cursor_pos.*.x, char);
     cursor_pos.*.x += 1;
+}
+
+pub fn addNewLine(allocator: std.mem.Allocator, lines: *std.ArrayList(std.ArrayList(u8)), cursor_pos: *Pos) !void {
+    var newLine = std.ArrayList(u8).init(allocator);
+    try newLine.append(0);
+    try lines.insert(cursor_pos.y+1, newLine);
+    cursor_pos.*.y += 1;
+    cursor_pos.*.x = 0;
 }
 
 pub fn fatal(comptime fmt: []const u8, args: anytype) noreturn {
