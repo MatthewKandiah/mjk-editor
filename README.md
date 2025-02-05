@@ -11,7 +11,7 @@
 - [x] Display a hardcoded string in the middle of that window
 - [x] Handle keyboard inputs for editing the displayed string
 - [x] Read a file in
-- [ ] Write buffer to file
+- [x] Write buffer to file
 
 ## DEFERRED
 I __think__ we get these things for free by using SDL. That might not be true. They might be fun to do from scratch later.
