@@ -5,6 +5,10 @@
 - Shell integration, want to be able to easily send input from buffer to shell command, and take output from shell command and write to (current or new) buffer
 
 ## TODO
+### UTF-8 support
+- I'm hoping the Zig std lib unicode module makes it relatively easy to support UTF-8 text.
+- We'll be dealing with lots of strings of text, so we might want to wrap everything into a Utf8String data structure?
+  
 ### More sensible text buffer data structure
 - I've been using null terminated strings internally to use SDL text drawing, would prefer to drop this and just use slices
 - sensible insert and delete functions
