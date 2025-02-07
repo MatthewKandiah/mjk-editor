@@ -6,7 +6,7 @@ pub fn build(b: *std.Build) void {
 
     const lib = b.addStaticLibrary(.{
         .name = "mjk-editor",
-        .root_source_file = b.path("src/lib.zig"),
+        .root_source_file = b.path("src/lib/lib.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -14,7 +14,7 @@ pub fn build(b: *std.Build) void {
 
     const exe = b.addExecutable(.{
         .name = "mjk-editor",
-        .root_source_file = b.path("src/main.zig"),
+        .root_source_file = b.path("src/main/main.zig"),
         .target = target,
         .optimize = optimize,
     });
