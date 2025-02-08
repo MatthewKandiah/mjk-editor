@@ -1,8 +1,10 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 const c = @cImport({
     @cInclude("SDL2/SDL.h");
     @cInclude("SDL2/SDL_ttf.h");
 });
+const Buffer = @import("buffer.zig").Buffer;
 
 pub const Platform = struct {
     window: *c.SDL_Window,
@@ -75,4 +77,12 @@ pub const Platform = struct {
 
 pub fn crash() noreturn {
     std.process.exit(1);
+}
+
+pub fn readFile(allocator: Allocator, path: []const u8) !Buffer {
+    const file = try std.fs.cwd().openFile(path, std.fs.File.OpenFlags{ .mode = .read_only });
+    defer file.close();
+
+    const buffer = try Buffer.init(allocator, file.reader().any());
+    return buffer;
 }
