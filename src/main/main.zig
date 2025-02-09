@@ -24,7 +24,10 @@ pub fn main() !void {
             } else if (event.type == c.SDL_WINDOWEVENT) {
                 platform.handleWindowResized();
             } else if (event.type == c.SDL_KEYDOWN) {
-                platform.print("Unhandled keypress\n", .{});
+                switch (event.key.keysym.sym) {
+                    c.SDLK_ESCAPE => running = false,
+                    else => platform.print("Unhandled keypress\n", .{}),
+                }
             }
         }
         platform.renderScreen();
