@@ -12,8 +12,8 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     const in_filepath = "debug/test.txt";
+    const out_filepath = "debug/test.out.txt";
     const buffer = try pf.readFile(allocator, in_filepath);
-    _ = buffer;
 
     var event: c.SDL_Event = undefined;
     var running = true;
@@ -29,4 +29,6 @@ pub fn main() !void {
         }
         platform.renderScreen();
     }
+
+    try pf.writeFile(out_filepath, buffer);
 }

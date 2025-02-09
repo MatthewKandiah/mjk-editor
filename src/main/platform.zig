@@ -86,3 +86,11 @@ pub fn readFile(allocator: Allocator, path: []const u8) !Buffer {
     const buffer = try Buffer.init(allocator, file.reader().any());
     return buffer;
 }
+
+pub fn writeFile(path: []const u8, buffer: Buffer) !void {
+    // TODO-Matt: Create file if it doesn't exist
+    const file = try std.fs.cwd().openFile(path, std.fs.File.OpenFlags{ .mode = .write_only });
+    defer file.close();
+
+    try buffer.write(file.writer().any());
+}
