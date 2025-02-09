@@ -18,7 +18,7 @@ pub fn main() !void {
 
     const font_filepath = "font/ubuntu-mono/ubuntu_mono.ttf";
     const font_size = 24;
-    const font = try Font.init(font_filepath, font_size);
+    const font = try Font.init(allocator, font_filepath, font_size);
     _ = font;
 
     var event: c.SDL_Event = undefined;
