@@ -1,6 +1,7 @@
 const std = @import("std");
 const pf = @import("platform.zig");
 const Platform = pf.Platform;
+const Font = @import("font.zig").Font;
 const c = @cImport({
     @cInclude("SDL2/SDL.h");
     @cInclude("SDL2/SDL_ttf.h");
@@ -14,6 +15,11 @@ pub fn main() !void {
     const in_filepath = "debug/test.txt";
     const out_filepath = "debug/test.out.txt";
     const buffer = try pf.readFile(allocator, in_filepath);
+
+    const font_filepath = "font/ubuntu-mono/ubuntu_mono.ttf";
+    const font_size = 24;
+    const font = try Font.init(font_filepath, font_size);
+    _ = font;
 
     var event: c.SDL_Event = undefined;
     var running = true;
