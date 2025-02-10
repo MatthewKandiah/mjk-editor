@@ -5,8 +5,14 @@ const c = @cImport({
     @cInclude("SDL_ttf.h");
 });
 
-const LookupTable = std.AutoHashMap(u32, []bool);
+const LookupTable = std.AutoHashMap(u32, GlyphInfo);
 const ArrayList = std.ArrayList;
+
+pub const GlyphInfo = struct {
+    data: []bool,
+    width: usize,
+    height: usize,
+};
 
 pub const Font = struct {
     table: LookupTable,
@@ -25,12 +31,11 @@ pub const Font = struct {
         const data = try allocator.alloc(bool, BUFFER_SIZE);
 
         var write_head: usize = 0;
-        for (1..128) |i| {
-            std.debug.print("{c}\n", .{@as(u8, @intCast(i))});
+        for (32..128) |i| {
             const glyph_surface: *c.SDL_Surface = c.TTF_RenderGlyph32_Solid(
                 handle,
                 @intCast(i),
-                c.SDL_Color{ .r = 0, .g = 0, .b = 0 },
+                c.SDL_Color{ .r = 255, .g = 0, .b = 0 },
             ) orelse return error.RenderGlyphFailed;
             // check we're rendering the glyph to a paletised 8-bit surface, affects the pixel buffer layout
             std.debug.assert(glyph_surface.format.*.Rmask == 0);
@@ -38,7 +43,9 @@ pub const Font = struct {
             std.debug.assert(glyph_surface.format.*.Bmask == 0);
             std.debug.assert(glyph_surface.format.*.Amask == 0);
             std.debug.assert(glyph_surface.format.*.BytesPerPixel == 1);
-            const glyph_surface_data = @as([*]u8, @ptrCast(glyph_surface.pixels))[0..@intCast(glyph_surface.w * glyph_surface.h)];
+            const glyph_width: usize = @intCast(glyph_surface.w);
+            const glyph_height: usize = @intCast(glyph_surface.h);
+            const glyph_surface_data = @as([*]u8, @ptrCast(glyph_surface.pixels))[0 .. glyph_width * glyph_height];
             var write_count: usize = 0;
             for (glyph_surface_data) |byte| {
                 switch (byte) {
@@ -48,7 +55,12 @@ pub const Font = struct {
                 }
                 write_count += 1;
             }
-            try table.put(@intCast(i), data[write_head..write_head + write_count]);
+            const glyph_info = GlyphInfo{
+                .data = data[write_head .. write_head + write_count],
+                .width = glyph_width,
+                .height = glyph_height,
+            };
+            try table.put(@intCast(i), glyph_info);
             write_head += write_count;
         }
 
