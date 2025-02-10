@@ -31,10 +31,10 @@ pub const Font = struct {
         const data = try allocator.alloc(bool, BUFFER_SIZE);
 
         var write_head: usize = 0;
-        for (32..128) |i| {
+        for (32..128) |char| {
             const glyph_surface: *c.SDL_Surface = c.TTF_RenderGlyph32_Solid(
                 handle,
-                @intCast(i),
+                @intCast(char),
                 c.SDL_Color{ .r = 255, .g = 0, .b = 0 },
             ) orelse return error.RenderGlyphFailed;
             // check we're rendering the glyph to a paletised 8-bit surface, affects the pixel buffer layout
@@ -45,12 +45,21 @@ pub const Font = struct {
             std.debug.assert(glyph_surface.format.*.BytesPerPixel == 1);
             const glyph_width: usize = @intCast(glyph_surface.w);
             const glyph_height: usize = @intCast(glyph_surface.h);
-            const glyph_surface_data = @as([*]u8, @ptrCast(glyph_surface.pixels))[0 .. glyph_width * glyph_height];
+            const glyph_pitch: usize = @intCast(glyph_surface.pitch);
+            const glyph_surface_data_raw = @as([*]u8, @ptrCast(glyph_surface.pixels))[0 .. glyph_pitch * glyph_height];
+            var glyph_surface_data = try allocator.alloc(u8, glyph_height * glyph_width);
+            for (0..glyph_height) |j| {
+                for (0..glyph_width) |i| {
+                    const read_index = j * glyph_pitch + i;
+                    const write_index = j * glyph_width + i;
+                    glyph_surface_data[write_index] = glyph_surface_data_raw[read_index];
+                }
+            }
             var write_count: usize = 0;
             for (glyph_surface_data) |byte| {
                 switch (byte) {
-                    0 => data[write_count] = false,
-                    1 => data[write_count] = true,
+                    0 => data[write_head + write_count] = false,
+                    1 => data[write_head + write_count] = true,
                     else => return error.InvalidSDL,
                 }
                 write_count += 1;
@@ -60,7 +69,7 @@ pub const Font = struct {
                 .width = glyph_width,
                 .height = glyph_height,
             };
-            try table.put(@intCast(i), glyph_info);
+            try table.put(@intCast(char), glyph_info);
             write_head += write_count;
         }
 
