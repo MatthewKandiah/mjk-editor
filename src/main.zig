@@ -18,27 +18,15 @@ pub fn main() !void {
 
     // const font_filepath = "font/ubuntu-mono/ubuntu_mono.ttf";
     const font_filepath = "font/roboto/roboto-regular.ttf";
-    const font_size = 24;
+    const font_size = 32;
     const font = try Font.init(allocator, font_filepath, font_size);
-
-    for ('a'..'a' + 26) |char| {
-        const char_a = font.table.get(@intCast(char)) orelse std.debug.panic("blew up\n", .{});
-        for (0..char_a.height) |j| {
-            for (0..char_a.width) |i| {
-                const index = j * char_a.width + i;
-                if (char_a.data[index]) {
-                    std.debug.print("#", .{});
-                } else {
-                    std.debug.print(".", .{});
-                }
-            }
-            std.debug.print("\n", .{});
-        }
-    }
 
     var event: c.SDL_Event = undefined;
     var running = true;
     while (running) {
+        platform.drawCharacter('a', font, .{ .x = 48, .y = 64 }, .{ .r = 122, .g = 122, .b = 122 }, .{ .r = 255, .g = 0, .b = 0 });
+        platform.drawCharacter('b', font, .{ .x = 32, .y = 92 }, .{ .r = 122, .g = 122, .b = 122 }, .{ .r = 255, .g = 255, .b = 0 });
+        platform.drawCharacter('c', font, .{ .x = 16, .y = 32 }, .{ .r = 122, .g = 122, .b = 122 }, .{ .r = 255, .g = 255, .b = 255 });
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
             if (event.type == c.SDL_QUIT) {
                 running = false;

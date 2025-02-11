@@ -5,6 +5,9 @@ const c = @cImport({
     @cInclude("SDL2/SDL_ttf.h");
 });
 const Buffer = @import("buffer.zig").Buffer;
+const Font = @import("font.zig").Font;
+const Position = @import("position.zig").Position;
+const Colour = @import("colour.zig").Colour;
 
 pub const Platform = struct {
     window: *c.SDL_Window,
@@ -71,6 +74,35 @@ pub const Platform = struct {
         if (res != 0) {
             self.printErr("ERROR - Failed to render screen\n", .{});
             crash();
+        }
+    }
+
+    pub fn drawCharacter(self: Self, char: u32, font: Font, pos: Position, bg_colour: Colour, fg_colour: Colour) void {
+        const glyph = font.table.get(char) orelse @panic("TODO - handle missing character better");
+        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
+        for (0..glyph.height) |j| {
+            for (0..glyph.width) |i| {
+                const surface_pitch: usize = @intCast(self.surface.w);
+                const surface_bytes_per_pixel: u8 = @intCast(self.surface.format.*.BytesPerPixel);
+                std.debug.assert(surface_bytes_per_pixel == 4);
+                const base_index: usize = surface_bytes_per_pixel * (pos.x + pos.y * surface_pitch);
+                const index = base_index + j * surface_pitch + i;
+                const sdl_fg_colour = c.SDL_MapRGBA(
+                    self.surface.format,
+                    fg_colour.r,
+                    fg_colour.g,
+                    fg_colour.b,
+                    c.SDL_ALPHA_OPAQUE,
+                );
+                const sdl_bg_colour = c.SDL_MapRGBA(
+                    self.surface.format,
+                    bg_colour.r,
+                    bg_colour.g,
+                    bg_colour.b,
+                    c.SDL_ALPHA_OPAQUE,
+                );
+                pixels[index] = if (glyph.data[j * glyph.width + i]) sdl_fg_colour else sdl_bg_colour;
+            }
         }
     }
 };
