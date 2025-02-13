@@ -8,6 +8,7 @@ const Buffer = @import("buffer.zig").Buffer;
 const Font = @import("font.zig").Font;
 const Position = @import("position.zig").Position;
 const Colour = @import("colour.zig").Colour;
+const Utf8String = @import("unicodeString.zig").Utf8String;
 
 pub const Platform = struct {
     window: *c.SDL_Window,
@@ -77,7 +78,7 @@ pub const Platform = struct {
         }
     }
 
-    pub fn drawCharacter(self: Self, char: u32, font: Font, pos: Position, bg_colour: Colour, fg_colour: Colour) void {
+    pub fn drawCharacter(self: Self, char: Utf8String.CodePoint, font: Font, pos: Position, bg_colour: Colour, fg_colour: Colour) void {
         const glyph = font.table.get(char) orelse @panic("TODO - handle missing character better");
         const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
         for (0..glyph.height) |j| {

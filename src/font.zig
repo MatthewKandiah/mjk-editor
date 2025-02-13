@@ -4,8 +4,9 @@ const c = @cImport({
     @cInclude("SDL.h");
     @cInclude("SDL_ttf.h");
 });
+const Utf8String = @import("./unicodeString.zig").Utf8String;
 
-const LookupTable = std.AutoHashMap(u32, GlyphInfo);
+const LookupTable = std.AutoHashMap(Utf8String.CodePoint, GlyphInfo);
 const ArrayList = std.ArrayList;
 
 pub const GlyphInfo = struct {
