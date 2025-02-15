@@ -103,7 +103,7 @@ pub const Font = struct {
         if (existing_glyph) |g| {
             return g;
         }
+        // TODO-Matt: might be worth pulling in a block of characters around this unknown one, since you're likely to use other nearby symbols
         return self.addGlyph(codepoint);
-
     }
 };
