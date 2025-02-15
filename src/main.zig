@@ -32,7 +32,7 @@ pub fn main() !void {
         _ = try platform.drawCharacter('±', &font, .{ .x = 16, .y = 32 }, .{ .r = 122, .g = 122, .b = 122 }, .{ .r = 255, .g = 255, .b = 255 });
         var input = [_]u8{'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd'};
         const utf8Data = Utf8String{ .data = &input};
-        try platform.drawUtf8String(utf8Data, &font, .{ .x = 0, .y = 0 }, .{ .r = 255, .g = 255, .b = 255 }, .{ .r = 0, .g = 0, .b = 0 });
+        try platform.drawUtf8String(utf8Data, &font, .{ .x = 16, .y = 0 }, .{ .r = 255, .g = 255, .b = 255 }, .{ .r = 0, .g = 0, .b = 0 });
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
             if (event.type == c.SDL_QUIT) {
                 running = false;

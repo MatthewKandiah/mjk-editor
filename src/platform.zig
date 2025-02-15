@@ -86,7 +86,7 @@ pub const Platform = struct {
                 const surface_pitch: usize = @intCast(self.surface.w);
                 const surface_bytes_per_pixel: u8 = @intCast(self.surface.format.*.BytesPerPixel);
                 std.debug.assert(surface_bytes_per_pixel == 4);
-                const base_index: usize = surface_bytes_per_pixel * (pos.x + pos.y * surface_pitch);
+                const base_index: usize = pos.x + pos.y * surface_pitch;
                 const index = base_index + j * surface_pitch + i;
                 const sdl_fg_colour = c.SDL_MapRGBA(
                     self.surface.format,
@@ -108,14 +108,13 @@ pub const Platform = struct {
         return glyph.width;
     }
 
-    // TODO-Matt: Not sure why this isn't working, variable width font is getting gaps between characters, my drawn_width is clearly wrong
-    // dividing by bytes_per_pixel seems to almost fix it
     pub fn drawUtf8String(self: Self, data: Utf8String, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !void {
         var iter = try data.iterate();
         var current = iter.next();
         var x_offset: usize = 0;
         while (current) |char| : (current = iter.next()) {
-            const drawn_width = try self.drawCharacter(char, font, .{ .x = pos.x + x_offset, .y = pos.y }, bg_colour, fg_colour);
+            const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y };
+            const drawn_width = try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
             x_offset += drawn_width;
         }
     }
