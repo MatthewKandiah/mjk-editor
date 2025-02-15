@@ -22,7 +22,9 @@ pub const Font = struct {
     // space, but only map that space to physical memory as it's needed. Maybe that's what we want?
     // Or maybe easier to just keep an ArrayList([]bool) and grow it as needed?
     data: []bool,
+    data_write_head: usize,
     allocator: Allocator,
+    font_handle: *c.TTF_Font,
 
     const Self = @This();
 
@@ -30,14 +32,21 @@ pub const Font = struct {
 
     pub fn init(allocator: Allocator, filepath: []const u8, ptsize: u32) !Self {
         const handle = c.TTF_OpenFont(@ptrCast(filepath), @intCast(ptsize)) orelse return error.OpenFontFailed;
-
-        var table = LookupTable.init(allocator);
+        const table = LookupTable.init(allocator);
         const data = try allocator.alloc(bool, BUFFER_SIZE);
+        return Self{
+            .table = table,
+            .data = data,
+            .data_write_head = 0,
+            .font_handle = handle,
+            .allocator = allocator,
+        };
+    }
 
-        var write_head: usize = 0;
+    pub fn fillBasicGlyphs(self: *Self) !void {
         for (32..128) |char| {
             const glyph_surface: *c.SDL_Surface = c.TTF_RenderGlyph32_Solid(
-                handle,
+                self.font_handle,
                 @intCast(char),
                 c.SDL_Color{ .r = 255, .g = 0, .b = 0 },
             ) orelse return error.RenderGlyphFailed;
@@ -51,7 +60,7 @@ pub const Font = struct {
             const glyph_height: usize = @intCast(glyph_surface.h);
             const glyph_pitch: usize = @intCast(glyph_surface.pitch);
             const glyph_surface_data_raw = @as([*]u8, @ptrCast(glyph_surface.pixels))[0 .. glyph_pitch * glyph_height];
-            var glyph_surface_data = try allocator.alloc(u8, glyph_height * glyph_width);
+            var glyph_surface_data = try self.allocator.alloc(u8, glyph_height * glyph_width);
             for (0..glyph_height) |j| {
                 for (0..glyph_width) |i| {
                     const read_index = j * glyph_pitch + i;
@@ -62,32 +71,30 @@ pub const Font = struct {
             var write_count: usize = 0;
             for (glyph_surface_data) |byte| {
                 switch (byte) {
-                    0 => data[write_head + write_count] = false,
-                    1 => data[write_head + write_count] = true,
+                    0 => self.data[self.data_write_head + write_count] = false,
+                    1 => self.data[self.data_write_head + write_count] = true,
                     else => return error.InvalidSDL,
                 }
                 write_count += 1;
             }
             const glyph_info = GlyphInfo{
-                .data = data[write_head .. write_head + write_count],
+                .data = self.data[self.data_write_head .. self.data_write_head + write_count],
                 .width = glyph_width,
                 .height = glyph_height,
             };
-            try table.put(@intCast(char), glyph_info);
-            write_head += write_count;
+            try self.table.put(@intCast(char), glyph_info);
+            self.data_write_head += write_count;
         }
-
-        return Self{
-            .table = table,
-            .data = data,
-            .allocator = allocator,
-        };
     }
 
-    // TODO-Matt: sensible get function
-    // needs to take in a unicode codepoint, and get the glyph data if it exists, or return error
-    // can then extend to grab the missing glyph data as it's needed instead
     pub fn get(self: Self, codepoint: Utf8String.CodePoint) !GlyphInfo {
-        return self.table.get(codepoint) orelse @panic("TODO - handle missing glyphs better");
+        const existing_glyph = self.table.get(codepoint);
+        if (existing_glyph) |g| {
+            return g;
+        }
+        unreachable;
+        // TODO-Matt: probably better to load in a block of glyphs around the new glyph, because you're likely to use them too.
+        // Going to just grab the one unknown glyph for now for simplicity
+
     }
 };

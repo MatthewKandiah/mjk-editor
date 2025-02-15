@@ -31,8 +31,8 @@ pub const Utf8String = struct {
                 return null;
             }
             const first_byte = self.data[self.index];
-            const sequence_length = unicode.utf8ByteSequenceLength(first_byte) catch std.debug.panic("init validates slice is good utf8, so this should never happen");
-            const res = unicode.utf8Decode(self.data[self.index .. self.index + sequence_length]) catch std.debug.panic("init validates slice is good utf8, so this should never happen either");
+            const sequence_length = unicode.utf8ByteSequenceLength(first_byte) catch unreachable;
+            const res = unicode.utf8Decode(self.data[self.index .. self.index + sequence_length]) catch unreachable;
             self.index += sequence_length;
             return res;
         }

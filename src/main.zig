@@ -19,7 +19,8 @@ pub fn main() !void {
     // const font_filepath = "font/ubuntu-mono/ubuntu_mono.ttf";
     const font_filepath = "font/roboto/roboto-regular.ttf";
     const font_size = 32;
-    const font = try Font.init(allocator, font_filepath, font_size);
+    var font = try Font.init(allocator, font_filepath, font_size);
+    try font.fillBasicGlyphs();
 
     var event: c.SDL_Event = undefined;
     var running = true;
