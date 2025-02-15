@@ -24,9 +24,9 @@ pub fn main() !void {
     var event: c.SDL_Event = undefined;
     var running = true;
     while (running) {
-        platform.drawCharacter('a', font, .{ .x = 48, .y = 64 }, .{ .r = 122, .g = 122, .b = 122 }, .{ .r = 255, .g = 0, .b = 0 });
-        platform.drawCharacter('b', font, .{ .x = 32, .y = 92 }, .{ .r = 122, .g = 122, .b = 122 }, .{ .r = 255, .g = 255, .b = 0 });
-        platform.drawCharacter('c', font, .{ .x = 16, .y = 32 }, .{ .r = 122, .g = 122, .b = 122 }, .{ .r = 255, .g = 255, .b = 255 });
+        try platform.drawCharacter(0x5B, font, .{ .x = 48, .y = 64 }, .{ .r = 122, .g = 122, .b = 122 }, .{ .r = 255, .g = 0, .b = 0 });
+        try platform.drawCharacter(0x58, font, .{ .x = 32, .y = 92 }, .{ .r = 122, .g = 122, .b = 122 }, .{ .r = 255, .g = 255, .b = 0 });
+        try platform.drawCharacter('0', font, .{ .x = 16, .y = 32 }, .{ .r = 122, .g = 122, .b = 122 }, .{ .r = 255, .g = 255, .b = 255 });
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
             if (event.type == c.SDL_QUIT) {
                 running = false;

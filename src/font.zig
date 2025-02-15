@@ -18,6 +18,9 @@ pub const GlyphInfo = struct {
 pub const Font = struct {
     table: LookupTable,
     // TODO-Matt: allocate new buffers when we need more space for glyph image data
+    // think I've read that it's possible to reserve a massive chunk of virtual address
+    // space, but only map that space to physical memory as it's needed. Maybe that's what we want?
+    // Or maybe easier to just keep an ArrayList([]bool) and grow it as needed?
     data: []bool,
     allocator: Allocator,
 
@@ -79,5 +82,12 @@ pub const Font = struct {
             .data = data,
             .allocator = allocator,
         };
+    }
+
+    // TODO-Matt: sensible get function
+    // needs to take in a unicode codepoint, and get the glyph data if it exists, or return error
+    // can then extend to grab the missing glyph data as it's needed instead
+    pub fn get(self: Self, codepoint: Utf8String.CodePoint) !GlyphInfo {
+        return self.table.get(codepoint) orelse @panic("TODO - handle missing glyphs better");
     }
 };
