@@ -15,7 +15,7 @@ pub const Utf8String = struct {
         // TODO-Matt: validating on init feels more ergonomic, may be worse for performance if we are calling this frequently for long byte sequences?
         // Can consider validating on the next call instead, might even be better if we want to print something meaningful per invalid character,
         // current handling probably requires refusing to open a buffer containing invalid utf8 data. I don't hate that idea though.
-        fn init(data: []const u8) !IterSelf {
+        fn init(data: []u8) !IterSelf {
             const isValid = unicode.utf8ValidateSlice(data);
             if (isValid) {
                 return IterSelf{
@@ -26,7 +26,7 @@ pub const Utf8String = struct {
             return error.InvalidUtf8Slice;
         }
 
-        pub fn next(self: *Self) ?u21 {
+        pub fn next(self: *IterSelf) ?u21 {
             if (self.index >= self.data.len) {
                 return null;
             }

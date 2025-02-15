@@ -78,7 +78,7 @@ pub const Platform = struct {
         }
     }
 
-    pub fn drawCharacter(self: Self, char: Utf8String.CodePoint, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !void {
+    pub fn drawCharacter(self: Self, char: Utf8String.CodePoint, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !usize {
         const glyph = try font.get(char);
         const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
         for (0..glyph.height) |j| {
@@ -104,6 +104,19 @@ pub const Platform = struct {
                 );
                 pixels[index] = if (glyph.data[j * glyph.width + i]) sdl_fg_colour else sdl_bg_colour;
             }
+        }
+        return glyph.width;
+    }
+
+    // TODO-Matt: Not sure why this isn't working, variable width font is getting gaps between characters, my drawn_width is clearly wrong
+    // dividing by bytes_per_pixel seems to almost fix it
+    pub fn drawUtf8String(self: Self, data: Utf8String, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !void {
+        var iter = try data.iterate();
+        var current = iter.next();
+        var x_offset: usize = 0;
+        while (current) |char| : (current = iter.next()) {
+            const drawn_width = try self.drawCharacter(char, font, .{ .x = pos.x + x_offset, .y = pos.y }, bg_colour, fg_colour);
+            x_offset += drawn_width;
         }
     }
 };
