@@ -78,7 +78,7 @@ pub const Platform = struct {
         }
     }
 
-    pub fn drawCharacter(self: Self, char: Utf8String.CodePoint, font: Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !void {
+    pub fn drawCharacter(self: Self, char: Utf8String.CodePoint, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !void {
         const glyph = try font.get(char);
         const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
         // TODO-Matt: Could we define a GlyphInfo iterator that gives you each row of bits []bool in order?

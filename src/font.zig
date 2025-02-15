@@ -45,56 +45,65 @@ pub const Font = struct {
 
     pub fn fillBasicGlyphs(self: *Self) !void {
         for (32..128) |char| {
-            const glyph_surface: *c.SDL_Surface = c.TTF_RenderGlyph32_Solid(
-                self.font_handle,
-                @intCast(char),
-                c.SDL_Color{ .r = 255, .g = 0, .b = 0 },
-            ) orelse return error.RenderGlyphFailed;
-            // check we're rendering the glyph to a paletised 8-bit surface, affects the pixel buffer layout
-            std.debug.assert(glyph_surface.format.*.Rmask == 0);
-            std.debug.assert(glyph_surface.format.*.Gmask == 0);
-            std.debug.assert(glyph_surface.format.*.Bmask == 0);
-            std.debug.assert(glyph_surface.format.*.Amask == 0);
-            std.debug.assert(glyph_surface.format.*.BytesPerPixel == 1);
-            const glyph_width: usize = @intCast(glyph_surface.w);
-            const glyph_height: usize = @intCast(glyph_surface.h);
-            const glyph_pitch: usize = @intCast(glyph_surface.pitch);
-            const glyph_surface_data_raw = @as([*]u8, @ptrCast(glyph_surface.pixels))[0 .. glyph_pitch * glyph_height];
-            var glyph_surface_data = try self.allocator.alloc(u8, glyph_height * glyph_width);
-            for (0..glyph_height) |j| {
-                for (0..glyph_width) |i| {
-                    const read_index = j * glyph_pitch + i;
-                    const write_index = j * glyph_width + i;
-                    glyph_surface_data[write_index] = glyph_surface_data_raw[read_index];
-                }
-            }
-            var write_count: usize = 0;
-            for (glyph_surface_data) |byte| {
-                switch (byte) {
-                    0 => self.data[self.data_write_head + write_count] = false,
-                    1 => self.data[self.data_write_head + write_count] = true,
-                    else => return error.InvalidSDL,
-                }
-                write_count += 1;
-            }
-            const glyph_info = GlyphInfo{
-                .data = self.data[self.data_write_head .. self.data_write_head + write_count],
-                .width = glyph_width,
-                .height = glyph_height,
-            };
-            try self.table.put(@intCast(char), glyph_info);
-            self.data_write_head += write_count;
+            _ = try self.addGlyph(@intCast(char));
         }
     }
 
-    pub fn get(self: Self, codepoint: Utf8String.CodePoint) !GlyphInfo {
+    fn addGlyph(self: *Self, char: Utf8String.CodePoint) !GlyphInfo {
+        const glyph_surface: *c.SDL_Surface = c.TTF_RenderGlyph32_Solid(
+            self.font_handle,
+            @intCast(char),
+            c.SDL_Color{ .r = 255, .g = 0, .b = 0 },
+        ) orelse return error.RenderGlyphFailed;
+        defer c.SDL_FreeSurface(glyph_surface);
+
+        // check we're rendering the glyph to a paletised 8-bit surface, affects the pixel buffer layout
+        std.debug.assert(glyph_surface.format.*.Rmask == 0);
+        std.debug.assert(glyph_surface.format.*.Gmask == 0);
+        std.debug.assert(glyph_surface.format.*.Bmask == 0);
+        std.debug.assert(glyph_surface.format.*.Amask == 0);
+        std.debug.assert(glyph_surface.format.*.BytesPerPixel == 1);
+        const glyph_width: usize = @intCast(glyph_surface.w);
+        const glyph_height: usize = @intCast(glyph_surface.h);
+        const glyph_pitch: usize = @intCast(glyph_surface.pitch);
+        const glyph_surface_data_raw = @as([*]u8, @ptrCast(glyph_surface.pixels))[0 .. glyph_pitch * glyph_height];
+        var glyph_surface_data = try self.allocator.alloc(u8, glyph_height * glyph_width);
+        defer self.allocator.free(glyph_surface_data);
+
+        for (0..glyph_height) |j| {
+            for (0..glyph_width) |i| {
+                const read_index = j * glyph_pitch + i;
+                const write_index = j * glyph_width + i;
+                glyph_surface_data[write_index] = glyph_surface_data_raw[read_index];
+            }
+        }
+
+        var write_count: usize = 0;
+        for (glyph_surface_data) |byte| {
+            switch (byte) {
+                0 => self.data[self.data_write_head + write_count] = false,
+                1 => self.data[self.data_write_head + write_count] = true,
+                else => return error.InvalidSDL,
+            }
+            write_count += 1;
+        }
+
+        const glyph_info = GlyphInfo{
+            .data = self.data[self.data_write_head .. self.data_write_head + write_count],
+            .width = glyph_width,
+            .height = glyph_height,
+        };
+        try self.table.put(@intCast(char), glyph_info);
+        self.data_write_head += write_count;
+        return glyph_info;
+    }
+
+    pub fn get(self: *Self, codepoint: Utf8String.CodePoint) !GlyphInfo {
         const existing_glyph = self.table.get(codepoint);
         if (existing_glyph) |g| {
             return g;
         }
-        unreachable;
-        // TODO-Matt: probably better to load in a block of glyphs around the new glyph, because you're likely to use them too.
-        // Going to just grab the one unknown glyph for now for simplicity
+        return self.addGlyph(codepoint);
 
     }
 };
