@@ -6,10 +6,12 @@ const io = std.io;
 const AnyReader = io.AnyReader;
 const AnyWriter = io.AnyWriter;
 const platform = @import("platform.zig");
+const Position = @import("position.zig").Position;
 
 pub const Buffer = struct {
     data: ArrayList(ArrayList(u8)),
     allocator: Allocator,
+    cursor_pos: Position,
 
     const Self = @This();
 
@@ -27,9 +29,11 @@ pub const Buffer = struct {
             };
             try lines.append(line);
         }
+        // TODO-Matt: probably need to add an empty line if the input is empty, or we won't be able to position the cursor
         return Self{
             .data = lines,
             .allocator = allocator,
+            .cursor_pos = .{ .x = 0, .y = 0 },
         };
     }
 
