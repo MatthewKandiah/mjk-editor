@@ -25,6 +25,7 @@ pub const Font = struct {
     data_write_head: usize,
     allocator: Allocator,
     font_handle: *c.TTF_Font,
+    height: usize,
 
     const Self = @This();
 
@@ -34,11 +35,13 @@ pub const Font = struct {
         const handle = c.TTF_OpenFont(@ptrCast(filepath), @intCast(ptsize)) orelse return error.OpenFontFailed;
         const table = LookupTable.init(allocator);
         const data = try allocator.alloc(bool, BUFFER_SIZE);
+        const height = c.TTF_FontHeight(handle);
         return Self{
             .table = table,
             .data = data,
             .data_write_head = 0,
             .font_handle = handle,
+            .height = @intCast(height),
             .allocator = allocator,
         };
     }
