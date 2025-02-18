@@ -27,7 +27,7 @@ pub fn main() !void {
     var running = true;
     while (running) {
         var y_offset: usize = 0;
-        for (buffer.data.items, 0..) |line, y_pos| {
+        for (buffer.data.items) |line| {
             const utf8Data = Utf8String{ .data = line.items };
             try platform.drawUtf8String(
                 utf8Data,
@@ -35,8 +35,6 @@ pub fn main() !void {
                 .{ .x = 16, .y = y_offset },
                 .{ .r = 255, .g = 255, .b = 0 },
                 .{ .r = 0, .g = 0, .b = 255 },
-                // TODO-Matt: Swapping colours is an easy way to show the cursor in normal mode, what are we going to do for insertion mode?
-                if (y_pos == buffer.cursor_pos.y) buffer.cursor_pos.x else null,
             );
             y_offset += font.height;
         }

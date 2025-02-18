@@ -108,22 +108,14 @@ pub const Platform = struct {
         return glyph.width;
     }
 
-    pub fn drawUtf8String(self: Self, data: Utf8String, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour, cursor_index: ?usize) !void {
+    pub fn drawUtf8String(self: Self, data: Utf8String, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !void {
         var iter = try data.iterate();
         var current = iter.next();
-        var x_count: usize = 0;
         var x_offset: usize = 0;
         while (current) |char| : (current = iter.next()) {
             const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y };
-            const drawn_width = try self.drawCharacter(
-                char,
-                font,
-                draw_pos,
-                if (cursor_index != x_count) bg_colour else fg_colour,
-                if (cursor_index != x_count) fg_colour else bg_colour,
-            );
+            const drawn_width = try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
             x_offset += drawn_width;
-            x_count += 1;
         }
     }
 };
