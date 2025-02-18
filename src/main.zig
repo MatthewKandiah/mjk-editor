@@ -27,7 +27,7 @@ pub fn main() !void {
     var running = true;
     while (running) {
         var y_offset: usize = 0;
-        for (buffer.data.items) |line| {
+        for (buffer.data.items, 0..) |line, y_pos| {
             const utf8Data = Utf8String{ .data = line.items };
             try platform.drawUtf8String(
                 utf8Data,
@@ -36,6 +36,9 @@ pub fn main() !void {
                 .{ .r = 255, .g = 255, .b = 0 },
                 .{ .r = 0, .g = 0, .b = 255 },
             );
+            if (y_pos == buffer.cursor_pos.y) {
+                // try platform.drawCursor();
+            }
             y_offset += font.height;
         }
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {

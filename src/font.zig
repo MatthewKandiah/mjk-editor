@@ -5,6 +5,7 @@ const c = @cImport({
     @cInclude("SDL_ttf.h");
 });
 const Utf8String = @import("./unicodeString.zig").Utf8String;
+const Position = @import("./position.zig").Position;
 
 const LookupTable = std.AutoHashMap(Utf8String.CodePoint, GlyphInfo);
 const ArrayList = std.ArrayList;
@@ -13,6 +14,12 @@ pub const GlyphInfo = struct {
     data: []bool,
     width: usize,
     height: usize,
+
+    const Self = @This();
+
+    pub fn get(self: Self, pos: Position) bool {
+        return self.data[pos.y * self.width + pos.x];
+    }
 };
 
 pub const Font = struct {

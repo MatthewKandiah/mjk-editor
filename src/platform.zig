@@ -78,31 +78,24 @@ pub const Platform = struct {
         }
     }
 
+    fn setPixelColour(self: Self, pos: Position, colour: Colour) void {
+        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
+        const surface_pitch: usize = @intCast(self.surface.w);
+        const sdl_colour = c.SDL_MapRGBA(self.surface.format, colour.r, colour.g, colour.b, c.SDL_ALPHA_OPAQUE);
+        pixels[pos.y * surface_pitch + pos.x] = sdl_colour;
+    }
+
     pub fn drawCharacter(self: Self, char: Utf8String.CodePoint, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !usize {
         const glyph = try font.get(char);
-        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
         for (0..glyph.height) |j| {
             for (0..glyph.width) |i| {
-                const surface_pitch: usize = @intCast(self.surface.w);
                 const surface_bytes_per_pixel: u8 = @intCast(self.surface.format.*.BytesPerPixel);
                 std.debug.assert(surface_bytes_per_pixel == 4);
-                const base_index: usize = pos.x + pos.y * surface_pitch;
-                const index = base_index + j * surface_pitch + i;
-                const sdl_fg_colour = c.SDL_MapRGBA(
-                    self.surface.format,
-                    fg_colour.r,
-                    fg_colour.g,
-                    fg_colour.b,
-                    c.SDL_ALPHA_OPAQUE,
+                const adjusted_pos = .{ .x = pos.x + i, .y = pos.y + j };
+                self.setPixelColour(
+                    adjusted_pos,
+                    if (glyph.get(.{ .x = i, .y = j })) fg_colour else bg_colour,
                 );
-                const sdl_bg_colour = c.SDL_MapRGBA(
-                    self.surface.format,
-                    bg_colour.r,
-                    bg_colour.g,
-                    bg_colour.b,
-                    c.SDL_ALPHA_OPAQUE,
-                );
-                pixels[index] = if (glyph.data[j * glyph.width + i]) sdl_fg_colour else sdl_bg_colour;
             }
         }
         return glyph.width;
@@ -117,6 +110,15 @@ pub const Platform = struct {
             const drawn_width = try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
             x_offset += drawn_width;
         }
+    }
+
+    pub fn drawCursor(self: Self, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour) !void {
+        // TODO-Matt: Can we pull out some helpers from drawCharacter to make this easier?
+        _ = self;
+        _ = width;
+        _ = height;
+        _ = bg_colour;
+        _ = fg_colour;
     }
 };
 
