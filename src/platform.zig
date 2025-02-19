@@ -85,6 +85,16 @@ pub const Platform = struct {
         pixels[pos.y * surface_pitch + pos.x] = sdl_colour;
     }
 
+    fn getPixelColour(self: Self, pos: Position) Colour {
+        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
+        const surface_pitch: usize = @intCast(self.surface.w);
+        var colour: Colour = undefined;
+        const pixel = pixels[pos.y * surface_pitch + pos.x];
+        var unnecessary: u8 = undefined;
+        c.SDL_GetRGBA(pixel, self.surface.format, &colour.r, &colour.g, &colour.b, &unnecessary);
+        return colour;
+    }
+
     pub fn drawCharacter(self: Self, char: Utf8String.CodePoint, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !usize {
         const glyph = try font.get(char);
         for (0..glyph.height) |j| {
@@ -112,13 +122,20 @@ pub const Platform = struct {
         }
     }
 
-    pub fn drawCursor(self: Self, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour) !void {
-        // TODO-Matt: Can we pull out some helpers from drawCharacter to make this easier?
-        _ = self;
-        _ = width;
-        _ = height;
-        _ = bg_colour;
-        _ = fg_colour;
+    pub fn drawCursor(self: Self, pos: Position, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour) !void {
+        for (0..height) |j| {
+            for (0..width) |i| {
+                const surface_bytes_per_pixel: u8 = @intCast(self.surface.format.*.BytesPerPixel);
+                std.debug.assert(surface_bytes_per_pixel == 4);
+                const adjusted_pos = .{ .x = pos.x + i, .y = pos.y + j };
+                const current_colour = self.getPixelColour(adjusted_pos);
+                const isBackground = current_colour.equals(bg_colour);
+                self.setPixelColour(
+                    adjusted_pos,
+                    if (isBackground) fg_colour else bg_colour,
+                );
+            }
+        }
     }
 };
 
