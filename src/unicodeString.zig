@@ -1,5 +1,7 @@
 const std = @import("std");
 const unicode = std.unicode;
+const Font = @import("font.zig").Font;
+const GlyphInfo = @import("font.zig").GlyphInfo;
 
 pub const Utf8String = struct {
     data: []u8,
@@ -42,5 +44,38 @@ pub const Utf8String = struct {
 
     pub fn iterate(self: Self) !Iterator {
         return Iterator.init(self.data);
+    }
+
+    pub fn width(self: Self, font: *Font, start: usize, end: usize) !usize {
+        var iter = try self.iterate();
+        var count: usize = 0;
+        var current = iter.next();
+        var res: usize = 0;
+        while (current != null) : ({
+            count += 1;
+            current = iter.next();
+        }) {
+            if (count < start) continue;
+            if (count >= end) break;
+            const glyph = try font.get(current.?);
+            res += glyph.width;
+        }
+        return res;
+    }
+
+    pub fn getGlyph(self: Self, font: *Font, index: usize) !GlyphInfo {
+        var iter = try self.iterate();
+        var count: usize = 0;
+        var current = iter.next();
+        while (current != null) : ({
+            count += 1;
+            current = iter.next();
+        }) {
+            if (count == index) {
+                return font.get(current.?);
+            }
+            if (count < index - 1) continue;
+        }
+        return error.GetGlyphFailed;
     }
 };

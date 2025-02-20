@@ -46,11 +46,16 @@ pub fn main() !void {
         }
         // draw cursor
         // TODO-Matt: requires converting the buffer.cursor_pos to a pixel pos (which depends on the buffer contents and font character widths) and the next character's dimensions
-        // try platform.drawCursor(
-        //     cursor_pixel_pos,
-        //     cursor_char_width,
-        //     cursor_char_height,
-        // );
+        const cursor_line = Utf8String{ .data = buffer.data.items[buffer.cursor_pos.y].items };
+        const cursor_pixel_pos = Position{ .x = try (cursor_line.width(&font, 0, buffer.cursor_pos.x)), .y = buffer.cursor_pos.y * font.height };
+        const cursor_char_width = (try cursor_line.getGlyph(&font, buffer.cursor_pos.x)).width;
+        try platform.drawCursor(
+            cursor_pixel_pos,
+            cursor_char_width,
+            font.height,
+            bg_colour,
+            fg_colour,
+        );
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
             if (event.type == c.SDL_QUIT) {
                 running = false;
