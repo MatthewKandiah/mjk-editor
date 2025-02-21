@@ -12,8 +12,14 @@ pub const Buffer = struct {
     data: ArrayList(ArrayList(u8)),
     allocator: Allocator,
     cursor_pos: Position,
+    mode: Mode,
 
     const Self = @This();
+
+    pub const Mode = enum {
+        Normal,
+        Insert,
+    };
 
     pub fn init(allocator: Allocator, reader: AnyReader) !Self {
         var lines = ArrayList(ArrayListU8).init(allocator);
@@ -34,6 +40,7 @@ pub const Buffer = struct {
             .data = lines,
             .allocator = allocator,
             .cursor_pos = .{ .x = 0, .y = 0 },
+            .mode = .Normal,
         };
     }
 

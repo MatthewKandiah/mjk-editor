@@ -55,7 +55,9 @@ pub fn main() !void {
             font.height,
             bg_colour,
             fg_colour,
+            buffer.mode,
         );
+
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
             if (event.type == c.SDL_QUIT) {
                 running = false;
@@ -69,6 +71,8 @@ pub fn main() !void {
                     c.SDLK_DOWN => buffer.cursor_pos.y += 1,
                     c.SDLK_LEFT => buffer.cursor_pos.x -= 1,
                     c.SDLK_RIGHT => buffer.cursor_pos.x += 1,
+                    c.SDLK_i => buffer.mode = .Insert,
+                    c.SDLK_n => buffer.mode = .Normal,
                     else => platform.print("Unhandled keypress\n", .{}),
                 }
             }

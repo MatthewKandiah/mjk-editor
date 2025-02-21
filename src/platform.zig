@@ -122,7 +122,18 @@ pub const Platform = struct {
         }
     }
 
-    pub fn drawCursor(self: Self, pos: Position, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour) !void {
+    pub fn drawCursor(self: Self, pos: Position, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour, mode: Buffer.Mode) !void {
+        switch (mode) {
+            .Normal => {
+                try self.drawBlockCursor(pos, width, height, bg_colour, fg_colour);
+            },
+            .Insert => {
+                try self.drawLineCursor(pos, height, fg_colour);
+            },
+        }
+    }
+
+    fn drawBlockCursor(self: Self, pos: Position, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour) !void {
         for (0..height) |j| {
             for (0..width) |i| {
                 const surface_bytes_per_pixel: u8 = @intCast(self.surface.format.*.BytesPerPixel);
@@ -133,6 +144,21 @@ pub const Platform = struct {
                 self.setPixelColour(
                     adjusted_pos,
                     if (isBackground) fg_colour else bg_colour,
+                );
+            }
+        }
+    }
+
+    fn drawLineCursor(self: Self, pos: Position, height: usize, colour: Colour) !void {
+        const cursor_width = 4;
+        for (0..height) |j| {
+            for (0..cursor_width) |i| {
+                const surface_bytes_per_pixel: u8 = @intCast(self.surface.format.*.BytesPerPixel);
+                std.debug.assert(surface_bytes_per_pixel == 4);
+                const adjusted_pos = .{ .x = pos.x + i, .y = pos.y + j };
+                self.setPixelColour(
+                    adjusted_pos,
+                    colour,
                 );
             }
         }
