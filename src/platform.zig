@@ -78,6 +78,15 @@ pub const Platform = struct {
         }
     }
 
+    pub fn clear(self: Self, colour: Colour) void {
+        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
+        const num_pixels: usize = @intCast(self.surface.w * self.surface.h);
+        const sdl_colour = c.SDL_MapRGBA(self.surface.format, colour.r, colour.g, colour.b, c.SDL_ALPHA_OPAQUE);
+        for (0..num_pixels) |i| {
+            pixels[i] = sdl_colour;
+        }
+    }
+
     fn setPixelColour(self: Self, pos: Position, colour: Colour) void {
         const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
         const surface_pitch: usize = @intCast(self.surface.w);

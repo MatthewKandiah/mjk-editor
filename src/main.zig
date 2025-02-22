@@ -25,12 +25,14 @@ pub fn main() !void {
     var font = try Font.init(allocator, font_filepath, font_size);
     try font.fillBasicGlyphs();
 
-    const bg_colour = Colour{ .r = 255, .g = 255, .b = 0 };
-    const fg_colour = Colour{ .r = 0, .g = 0, .b = 255 };
+    const bg_colour = Colour{ .r = 64, .g = 64, .b = 64 };
+    const fg_colour = Colour{ .r = 255, .g = 255, .b = 255 };
 
     var event: c.SDL_Event = undefined;
     var running = true;
     while (running) {
+        platform.clear(bg_colour); 
+
         // TODO-Matt: pull out a draw buffer function
         var y_offset: usize = 0;
         for (buffer.data.items) |line| {
@@ -49,7 +51,7 @@ pub fn main() !void {
         const cursor_pixel_pos = Position{ .x = try (cursor_line.width(&font, 0, buffer.cursor_pos.x)), .y = buffer.cursor_pos.y * font.height };
         if (buffer.cursor_pos.x >= buffer.data.items[buffer.cursor_pos.y].items.len) {
             const cursor_width = @divTrunc(font_size, 2);
-            try platform.drawSimpleBlock(cursor_pixel_pos, cursor_width, font.height, bg_colour);
+            try platform.drawSimpleBlock(cursor_pixel_pos, cursor_width, font.height, fg_colour);
         } else {
             const cursor_char_width = (try cursor_line.getGlyph(&font, buffer.cursor_pos.x)).width;
             try platform.drawCursor(
@@ -70,7 +72,7 @@ pub fn main() !void {
             } else if (event.type == c.SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
                     c.SDLK_ESCAPE => running = false,
-                    // TODO-Matt: super rough and messy, need to think about how we'll handle cursor movement in finite-length lines
+                    // TODO-Matt: handle moving between lines of different lengths more sensibly
                     c.SDLK_UP => buffer.handleMoveUp(),
                     c.SDLK_DOWN => buffer.handleMoveDown(),
                     c.SDLK_LEFT => buffer.handleMoveLeft(),
