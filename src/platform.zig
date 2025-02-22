@@ -152,8 +152,12 @@ pub const Platform = struct {
 
     fn drawLineCursor(self: Self, pos: Position, height: usize, colour: Colour) !void {
         const cursor_width = 4;
+        try self.drawSimpleBlock(pos, cursor_width, height, colour);
+    }
+
+    pub fn drawSimpleBlock(self: Self, pos: Position, width: usize, height: usize, colour: Colour) !void {
         for (0..height) |j| {
-            for (0..cursor_width) |i| {
+            for (0..width) |i| {
                 const surface_bytes_per_pixel: u8 = @intCast(self.surface.format.*.BytesPerPixel);
                 std.debug.assert(surface_bytes_per_pixel == 4);
                 const adjusted_pos = .{ .x = pos.x + i, .y = pos.y + j };
