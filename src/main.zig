@@ -66,10 +66,10 @@ pub fn main() !void {
                 switch (event.key.keysym.sym) {
                     c.SDLK_ESCAPE => running = false,
                     // TODO-Matt: super rough and messy, need to think about how we'll handle cursor movement in finite-length lines
-                    c.SDLK_UP => buffer.cursor_pos.y -= 1,
-                    c.SDLK_DOWN => buffer.cursor_pos.y += 1,
-                    c.SDLK_LEFT => buffer.cursor_pos.x -= 1,
-                    c.SDLK_RIGHT => buffer.cursor_pos.x += 1,
+                    c.SDLK_UP => buffer.handleMoveUp(),
+                    c.SDLK_DOWN => buffer.handleMoveDown(),
+                    c.SDLK_LEFT => buffer.handleMoveLeft(),
+                    c.SDLK_RIGHT => buffer.handleMoveRight(),
                     c.SDLK_i => buffer.mode = .Insert,
                     c.SDLK_n => buffer.mode = .Normal,
                     else => platform.print("Unhandled keypress\n", .{}),
