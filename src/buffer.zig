@@ -58,6 +58,7 @@ pub const Buffer = struct {
     pub fn handleMoveUp(self: *Self) void {
         if (self.cursor_pos.y == 0) return;
         self.cursor_pos.y -= 1;
+        self.restrictCursorToLine();
     }
 
     pub fn handleMoveRight(self: *Self) void {
@@ -68,5 +69,16 @@ pub const Buffer = struct {
     pub fn handleMoveDown(self: *Self) void {
         if (self.cursor_pos.y + 1 >= self.data.items.len) return;
         self.cursor_pos.y += 1;
+        self.restrictCursorToLine();
+    }
+
+    fn restrictCursorToLine(self: *Self) void {
+        if (self.cursor_pos.x >= self.data.items[self.cursor_pos.y].items.len) {
+            if (self.data.items[self.cursor_pos.y].items.len == 0) {
+                self.cursor_pos.x = 0;
+            } else {
+                self.cursor_pos.x = self.data.items[self.cursor_pos.y].items.len - 1;
+            }
+        }
     }
 };
