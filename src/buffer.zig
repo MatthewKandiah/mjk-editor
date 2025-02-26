@@ -12,6 +12,7 @@ pub const Buffer = struct {
     data: ArrayList(ArrayList(u8)),
     allocator: Allocator,
     cursor_pos: Position,
+    target_cursor_x: ?usize,
     mode: Mode,
 
     const Self = @This();
@@ -31,6 +32,7 @@ pub const Buffer = struct {
                         .data = lines,
                         .allocator = allocator,
                         .cursor_pos = .{ .x = 0, .y = 0 },
+                        .target_cursor_x = null,
                         .mode = .Normal,
                     };
                 } else {
@@ -53,6 +55,7 @@ pub const Buffer = struct {
     pub fn handleMoveLeft(self: *Self) void {
         if (self.cursor_pos.x == 0) return;
         self.cursor_pos.x -= 1;
+        self.target_cursor_x = self.cursor_pos.x;
     }
 
     pub fn handleMoveUp(self: *Self) void {
@@ -64,6 +67,7 @@ pub const Buffer = struct {
     pub fn handleMoveRight(self: *Self) void {
         if (self.cursor_pos.x + 1 >= self.data.items[self.cursor_pos.y].items.len) return;
         self.cursor_pos.x += 1;
+        self.target_cursor_x = self.cursor_pos.x;
     }
 
     pub fn handleMoveDown(self: *Self) void {
@@ -73,6 +77,9 @@ pub const Buffer = struct {
     }
 
     fn restrictCursorToLine(self: *Self) void {
+        if (self.target_cursor_x)|target| {
+            self.cursor_pos.x = target;
+        }
         if (self.cursor_pos.x >= self.data.items[self.cursor_pos.y].items.len) {
             if (self.data.items[self.cursor_pos.y].items.len == 0) {
                 self.cursor_pos.x = 0;
