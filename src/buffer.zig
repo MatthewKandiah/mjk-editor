@@ -7,12 +7,16 @@ const AnyReader = io.AnyReader;
 const AnyWriter = io.AnyWriter;
 const platform = @import("platform.zig");
 const Position = @import("position.zig").Position;
+const Font = @import("font.zig").Font;
 
 pub const Buffer = struct {
     data: ArrayList(ArrayList(u8)),
+    // TODO-Matt: Store character widths for sensible cursor movement
     allocator: Allocator,
     cursor_pos: Position,
     target_cursor_x: ?usize,
+    font: *Font,
+    font_size: usize,
     mode: Mode,
 
     const Self = @This();
@@ -22,7 +26,7 @@ pub const Buffer = struct {
         Insert,
     };
 
-    pub fn init(allocator: Allocator, reader: AnyReader) !Self {
+    pub fn init(allocator: Allocator, reader: AnyReader, font: *Font, font_size: usize) !Self {
         var lines = ArrayList(ArrayListU8).init(allocator);
         while (true) {
             var line = ArrayListU8.init(allocator);
@@ -34,6 +38,8 @@ pub const Buffer = struct {
                         .cursor_pos = .{ .x = 0, .y = 0 },
                         .target_cursor_x = null,
                         .mode = .Normal,
+                        .font = font,
+                        .font_size = font_size,
                     };
                 } else {
                     return err;
@@ -77,7 +83,7 @@ pub const Buffer = struct {
     }
 
     fn restrictCursorToLine(self: *Self) void {
-        if (self.target_cursor_x)|target| {
+        if (self.target_cursor_x) |target| {
             self.cursor_pos.x = target;
         }
         if (self.cursor_pos.x >= self.data.items[self.cursor_pos.y].items.len) {

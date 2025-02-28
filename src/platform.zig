@@ -183,11 +183,11 @@ pub fn crash() noreturn {
     std.process.exit(1);
 }
 
-pub fn readFile(allocator: Allocator, path: []const u8) !Buffer {
+pub fn readFile(allocator: Allocator, path: []const u8, font: *Font, font_size: usize) !Buffer {
     const file = try std.fs.cwd().openFile(path, std.fs.File.OpenFlags{ .mode = .read_only });
     defer file.close();
 
-    const buffer = try Buffer.init(allocator, file.reader().any());
+    const buffer = try Buffer.init(allocator, file.reader().any(), font, font_size);
     return buffer;
 }
 

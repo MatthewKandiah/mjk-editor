@@ -15,15 +15,15 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    const in_filepath = "debug/test.txt";
-    const out_filepath = "debug/test.out.txt";
-    var buffer = try pf.readFile(allocator, in_filepath);
-
-    const font_filepath = "font/ubuntu-mono/ubuntu_mono.ttf";
-    // const font_filepath = "font/roboto/roboto-regular.ttf";
+    // const font_filepath = "font/ubuntu-mono/ubuntu_mono.ttf";
+    const font_filepath = "font/roboto/roboto-regular.ttf";
     const font_size = 36;
     var font = try Font.init(allocator, font_filepath, font_size);
     try font.fillBasicGlyphs();
+
+    const in_filepath = "debug/test.txt";
+    const out_filepath = "debug/test.out.txt";
+    var buffer = try pf.readFile(allocator, in_filepath, &font, font_size);
 
     const bg_colour = Colour{ .r = 64, .g = 64, .b = 64 };
     const fg_colour = Colour{ .r = 255, .g = 255, .b = 255 };
