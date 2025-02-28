@@ -10,6 +10,7 @@ const c = @cImport({
     @cInclude("SDL2/SDL_ttf.h");
 });
 
+// TODO-Matt: memory use and cpu use profiling
 pub fn main() !void {
     var platform = Platform.init();
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
