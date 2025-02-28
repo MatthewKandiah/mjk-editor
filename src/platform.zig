@@ -187,8 +187,7 @@ pub fn readFile(allocator: Allocator, path: []const u8, font: *Font, font_size: 
     const file = try std.fs.cwd().openFile(path, std.fs.File.OpenFlags{ .mode = .read_only });
     defer file.close();
 
-    const buffer = try Buffer.init(allocator, file.reader().any(), font, font_size);
-    return buffer;
+    return Buffer.init(allocator, file.reader().any(), font, font_size);
 }
 
 pub fn writeFile(path: []const u8, buffer: Buffer) !void {
