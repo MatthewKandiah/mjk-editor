@@ -115,6 +115,17 @@ pub const Buffer = struct {
         var x_pos: usize = 0;
         var x_displacement: usize = 0;
 
+        if (self.mode == .Insert) {
+            var total_width: usize = 0;
+            for (self.char_widths.items[self.cursor_pos.y].items) |width| {
+                total_width += width;
+            }
+            if (self.target_x_position >= total_width) {
+                self.cursor_pos.x = self.data.items[self.cursor_pos.y].items.len;
+                return;
+            }
+        }
+
         while (x_pos < self.data.items[self.cursor_pos.y].items.len) {
             x_displacement += self.char_widths.items[self.cursor_pos.y].items[x_pos];
             if (x_displacement > self.target_x_position) {
