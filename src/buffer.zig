@@ -72,6 +72,10 @@ pub const Buffer = struct {
         }
     }
 
+    fn maxXPos(self: Self) usize {
+        return if (self.mode == .Insert) self.data.items[self.cursor_pos.y].items.len + 1 else self.data.items[self.cursor_pos.y].items.len;
+    }
+
     pub fn handleMoveLeft(self: *Self) void {
         if (self.cursor_pos.x == 0) return;
         self.cursor_pos.x -= 1;
@@ -79,7 +83,7 @@ pub const Buffer = struct {
     }
 
     pub fn handleMoveRight(self: *Self) void {
-        if (self.cursor_pos.x + 1 >= self.data.items[self.cursor_pos.y].items.len) return;
+        if (self.cursor_pos.x + 1 >= self.maxXPos()) return;
         self.cursor_pos.x += 1;
         self.updateTargetXPosition();
     }
@@ -89,22 +93,25 @@ pub const Buffer = struct {
         for (0..self.cursor_pos.x) |i| {
             self.target_x_position += self.char_widths.items[self.cursor_pos.y].items[i];
         }
-        self.target_x_position += self.char_widths.items[self.cursor_pos.y].items[self.cursor_pos.x] / 2;
+        if (self.cursor_pos.x < self.char_widths.items[self.cursor_pos.y].items.len) {
+            self.target_x_position += self.char_widths.items[self.cursor_pos.y].items[self.cursor_pos.x] / 2;
+        }
     }
 
+    // TODO-Matt: normal mode moving at the end of the line jumps back one more than we want
     pub fn handleMoveUp(self: *Self) void {
         if (self.cursor_pos.y == 0) return;
         self.cursor_pos.y -= 1;
-        self.restrictCursorToLine();
+        self.setCursorToTargetX();
     }
 
     pub fn handleMoveDown(self: *Self) void {
         if (self.cursor_pos.y + 1 >= self.data.items.len) return;
         self.cursor_pos.y += 1;
-        self.restrictCursorToLine();
+        self.setCursorToTargetX();
     }
 
-    fn restrictCursorToLine(self: *Self) void {
+    fn setCursorToTargetX(self: *Self) void {
         var x_pos: usize = 0;
         var x_displacement: usize = 0;
 
@@ -119,5 +126,10 @@ pub const Buffer = struct {
             x_pos += 1;
         }
         self.cursor_pos.x = x_pos;
+    }
+
+    pub fn switchToNormal(self: *Self) void {
+        self.mode = .Normal;
+        self.setCursorToTargetX();
     }
 };

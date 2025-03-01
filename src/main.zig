@@ -32,7 +32,7 @@ pub fn main() !void {
     var event: c.SDL_Event = undefined;
     var running = true;
     while (running) {
-        platform.clear(bg_colour); 
+        platform.clear(bg_colour);
 
         // TODO-Matt: pull out a draw buffer function
         var y_offset: usize = 0;
@@ -79,7 +79,7 @@ pub fn main() !void {
                     c.SDLK_LEFT => buffer.handleMoveLeft(),
                     c.SDLK_RIGHT => buffer.handleMoveRight(),
                     c.SDLK_i => buffer.mode = .Insert,
-                    c.SDLK_n => buffer.mode = .Normal,
+                    c.SDLK_n => buffer.switchToNormal(),
                     else => platform.print("Unhandled keypress\n", .{}),
                 }
             }
