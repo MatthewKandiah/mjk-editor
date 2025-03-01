@@ -5,6 +5,7 @@ const Font = @import("font.zig").Font;
 const Utf8String = @import("unicodeString.zig").Utf8String;
 const Colour = @import("colour.zig").Colour;
 const Position = @import("position.zig").Position;
+const screenshot = @import("test/screenshot.zig");
 const c = @cImport({
     @cInclude("SDL2/SDL.h");
     @cInclude("SDL2/SDL_ttf.h");
@@ -84,6 +85,11 @@ pub fn main() !void {
                 }
             }
         }
+
+        // if (!running) {
+        //     try screenshot.writeScreenshot(allocator, platform);
+        // }
+
         platform.renderScreen();
     }
 
