@@ -11,8 +11,8 @@ const Colour = @import("colour.zig").Colour;
 const Utf8String = @import("unicodeString.zig").Utf8String;
 
 pub const Platform = struct {
-    window: *c.SDL_Window,
-    surface: *c.SDL_Surface,
+    window: ?*c.SDL_Window,
+    surface: ?*c.SDL_Surface,
     stdout: std.fs.File,
     stderr: std.fs.File,
 
@@ -37,32 +37,16 @@ pub const Platform = struct {
             crash();
         }
 
-        const window = c.SDL_CreateWindow(
-            "mjk",
-            c.SDL_WINDOWPOS_UNDEFINED,
-            c.SDL_WINDOWPOS_UNDEFINED,
-            800,
-            600,
-            c.SDL_WINDOW_RESIZABLE,
-        ) orelse {
-            _ = stderr.write("ERROR - Failed to create window") catch {};
-            crash();
-        };
-
-        const surface = c.SDL_GetWindowSurface(window) orelse {
-            _ = stderr.write("ERROR - Failed to get window surface") catch {};
-            crash();
-        };
-        return Self{
-            .window = window,
-            .surface = surface,
+        return Self {
+            .window = null,
+            .surface = null,
             .stdout = stdout,
             .stderr = stderr,
         };
     }
 
     pub fn handleWindowResized(self: *Self) void {
-        self.surface = c.SDL_GetWindowSurface(self.window);
+        self.surface = c.SDL_GetWindowSurface(self.window.?);
     }
 
     pub fn print(self: Self, comptime fmt: []const u8, args: anytype) void {
@@ -82,28 +66,28 @@ pub const Platform = struct {
     }
 
     pub fn clear(self: Self, colour: Colour) void {
-        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
-        const num_pixels: usize = @intCast(self.surface.w * self.surface.h);
-        const sdl_colour = c.SDL_MapRGBA(self.surface.format, colour.r, colour.g, colour.b, c.SDL_ALPHA_OPAQUE);
+        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.?.pixels));
+        const num_pixels: usize = @intCast(self.surface.?.w * self.surface.?.h);
+        const sdl_colour = c.SDL_MapRGBA(self.surface.?.format, colour.r, colour.g, colour.b, c.SDL_ALPHA_OPAQUE);
         for (0..num_pixels) |i| {
             pixels[i] = sdl_colour;
         }
     }
 
     fn setPixelColour(self: Self, pos: Position, colour: Colour) void {
-        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
-        const surface_pitch: usize = @intCast(self.surface.w);
-        const sdl_colour = c.SDL_MapRGBA(self.surface.format, colour.r, colour.g, colour.b, c.SDL_ALPHA_OPAQUE);
+        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.?.pixels));
+        const surface_pitch: usize = @intCast(self.surface.?.w);
+        const sdl_colour = c.SDL_MapRGBA(self.surface.?.format, colour.r, colour.g, colour.b, c.SDL_ALPHA_OPAQUE);
         pixels[pos.y * surface_pitch + pos.x] = sdl_colour;
     }
 
     fn getPixelColour(self: Self, pos: Position) Colour {
-        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.pixels));
-        const surface_pitch: usize = @intCast(self.surface.w);
+        const pixels: [*]u32 = @alignCast(@ptrCast(self.surface.?.pixels));
+        const surface_pitch: usize = @intCast(self.surface.?.w);
         var colour: Colour = undefined;
         const pixel = pixels[pos.y * surface_pitch + pos.x];
         var unnecessary: u8 = undefined;
-        c.SDL_GetRGBA(pixel, self.surface.format, &colour.r, &colour.g, &colour.b, &unnecessary);
+        c.SDL_GetRGBA(pixel, self.surface.?.format, &colour.r, &colour.g, &colour.b, &unnecessary);
         return colour;
     }
 
@@ -111,7 +95,7 @@ pub const Platform = struct {
         const glyph = try font.get(char);
         for (0..glyph.height) |j| {
             for (0..glyph.width) |i| {
-                const surface_bytes_per_pixel: u8 = @intCast(self.surface.format.*.BytesPerPixel);
+                const surface_bytes_per_pixel: u8 = @intCast(self.surface.?.format.*.BytesPerPixel);
                 std.debug.assert(surface_bytes_per_pixel == 4);
                 const adjusted_pos = .{ .x = pos.x + i, .y = pos.y + j };
                 self.setPixelColour(
@@ -148,7 +132,7 @@ pub const Platform = struct {
     fn drawBlockCursor(self: Self, pos: Position, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour) !void {
         for (0..height) |j| {
             for (0..width) |i| {
-                const surface_bytes_per_pixel: u8 = @intCast(self.surface.format.*.BytesPerPixel);
+                const surface_bytes_per_pixel: u8 = @intCast(self.surface.?.format.*.BytesPerPixel);
                 std.debug.assert(surface_bytes_per_pixel == 4);
                 const adjusted_pos = .{ .x = pos.x + i, .y = pos.y + j };
                 const current_colour = self.getPixelColour(adjusted_pos);
@@ -169,7 +153,7 @@ pub const Platform = struct {
     pub fn drawSimpleBlock(self: Self, pos: Position, width: usize, height: usize, colour: Colour) !void {
         for (0..height) |j| {
             for (0..width) |i| {
-                const surface_bytes_per_pixel: u8 = @intCast(self.surface.format.*.BytesPerPixel);
+                const surface_bytes_per_pixel: u8 = @intCast(self.surface.?.format.*.BytesPerPixel);
                 std.debug.assert(surface_bytes_per_pixel == 4);
                 const adjusted_pos = .{ .x = pos.x + i, .y = pos.y + j };
                 self.setPixelColour(

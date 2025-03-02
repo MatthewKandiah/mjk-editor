@@ -14,6 +14,27 @@ const c = @cImport({
 // TODO-Matt: memory use and cpu use profiling
 pub fn main() !void {
     var platform = Platform.init();
+
+    const window = c.SDL_CreateWindow(
+        "mjk",
+        c.SDL_WINDOWPOS_UNDEFINED,
+        c.SDL_WINDOWPOS_UNDEFINED,
+        800,
+        600,
+        c.SDL_WINDOW_RESIZABLE,
+    ) orelse {
+        platform.printErr("ERROR - Failed to create window\n", .{});
+        pf.crash();
+    };
+
+    const surface = c.SDL_GetWindowSurface(window) orelse {
+        platform.printErr("ERROR - Failed to get window surface\n", .{});
+        pf.crash();
+    };
+
+    platform.window = window;
+    platform.surface = surface;
+
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
