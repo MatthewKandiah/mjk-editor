@@ -66,6 +66,7 @@ pub fn main() !void {
             );
         }
 
+        // TODO-Matt: pull out flush user events function
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
             if (event.type == c.SDL_QUIT) {
                 running = false;

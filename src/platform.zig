@@ -18,6 +18,9 @@ pub const Platform = struct {
 
     const Self = @This();
 
+    // TODO-Matt: separate system init from opening window
+    // The actual app needs to init and open its window
+    // The screenshot tests need to init (to get access to the SDL event queue and font rendering), then make an isolated surface (maybe with c.SDL_CreateRGBSurface? Not tried yet) so test setup can be isolated from app start changes
     pub fn init() Self {
         const stderr = std.io.getStdErr();
         const stdout = std.io.getStdOut();

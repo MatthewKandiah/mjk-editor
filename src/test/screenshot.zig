@@ -7,6 +7,11 @@ const c = @cImport({
 });
 const platform = @import("../platform.zig");
 
+// TODO-Matt: build test scenarios using SDL_PushEvent to simulate user actions
+pub fn buildScenario() !platform.Platform {
+    @panic("unimplemented\n");
+}
+
 pub fn writeScreenshot(allocator: Allocator, p: platform.Platform, screenshot_name: []const u8) !void {
     const out_data = try platformPixelDataToRGBA(allocator, p);
     defer allocator.free(out_data);
