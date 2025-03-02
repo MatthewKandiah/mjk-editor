@@ -11,7 +11,6 @@ const Font = @import("font.zig").Font;
 const Utf8String = @import("unicodeString.zig").Utf8String;
 
 pub const Buffer = struct {
-    // TODO-Matt: Should we parse these to u21 codepoints instead? Would simplify displaying them?
     data: ArrayList(ArrayListU8),
     char_widths: ArrayList(ArrayList(usize)),
     allocator: Allocator,
@@ -98,7 +97,6 @@ pub const Buffer = struct {
         }
     }
 
-    // TODO-Matt: normal mode moving at the end of the line jumps back one more than we want
     pub fn handleMoveUp(self: *Self) void {
         if (self.cursor_pos.y == 0) return;
         self.cursor_pos.y -= 1;

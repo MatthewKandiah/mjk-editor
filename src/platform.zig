@@ -120,7 +120,6 @@ pub const Platform = struct {
         return glyph.width;
     }
 
-    // TODO-Matt: also draw a space at the empty position at the end of the line (also handles navigating to empty lines)
     pub fn drawUtf8String(self: Self, data: Utf8String, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !void {
         var iter = try data.iterate();
         var current = iter.next();
