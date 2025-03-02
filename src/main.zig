@@ -74,7 +74,6 @@ pub fn main() !void {
             } else if (event.type == c.SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
                     c.SDLK_ESCAPE => running = false,
-                    // TODO-Matt: handle moving between lines of different lengths more sensibly
                     c.SDLK_UP => buffer.handleMoveUp(),
                     c.SDLK_DOWN => buffer.handleMoveDown(),
                     c.SDLK_LEFT => buffer.handleMoveLeft(),
@@ -85,10 +84,6 @@ pub fn main() !void {
                 }
             }
         }
-
-        // if (!running) {
-        //     try screenshot.writeScreenshot(allocator, platform);
-        // }
 
         platform.renderScreen();
     }

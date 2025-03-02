@@ -7,7 +7,57 @@ const c = @cImport({
 });
 const platform = @import("../platform.zig");
 
-pub fn writeScreenshot(allocator: Allocator, p: platform.Platform) !void {
+pub fn writeScreenshot(allocator: Allocator, p: platform.Platform, screenshot_name: []const u8) !void {
+    const out_data = try platformPixelDataToRGBA(allocator, p);
+    defer allocator.free(out_data);
+    const res = c.stbi_write_png(
+        @ptrCast(screenshot_name),
+        p.surface.w,
+        p.surface.h,
+        4,
+        @ptrCast(out_data),
+        4 * p.surface.w,
+    );
+    if (res != 1) {
+        @panic("stbi_write_png failed\n");
+    }
+}
+
+pub fn checkScreenshot(allocator: Allocator, p: platform.Platform, screenshot_name: []const u8) !bool {
+    const p_data = try platformPixelDataToRGBA(allocator, p);
+    defer allocator.free(p_data);
+
+    var screenshot_width: c_int = undefined;
+    var screenshot_height: c_int = undefined;
+    var screenshot_channel_count: c_int = undefined;
+    const screenshot_data = c.stbi_load(
+        @ptrCast(screenshot_name),
+        &screenshot_width,
+        &screenshot_height,
+        &screenshot_channel_count,
+        4,
+    );
+    if (screenshot_data == null) {
+        @panic("stbi_load failed\n");
+    }
+    defer c.stbi_image_free(screenshot_data);
+
+    const pixel_count: usize = @intCast(screenshot_width * screenshot_height);
+    const expected_pixel_count: usize = @intCast(p.surface.w * p.surface.h);
+    if (pixel_count != p.surface.w * p.surface.h) {
+        p.printErr("Screenshot failed - expected pixel count: {}, actual pixel count: {}\n", .{ expected_pixel_count, pixel_count });
+        return false;
+    }
+
+    for (0..pixel_count) |i| {
+        if (screenshot_data[i] != p_data[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+fn platformPixelDataToRGBA(allocator: Allocator, p: platform.Platform) ![]u8 {
     const pixels: [*]u32 = @alignCast(@ptrCast(p.surface.pixels));
     const pixel_count: usize = @intCast(p.surface.w * p.surface.h);
     var out_data = try allocator.alloc(u8, 4 * pixel_count);
@@ -22,15 +72,5 @@ pub fn writeScreenshot(allocator: Allocator, p: platform.Platform) !void {
         out_data[4 * i + 2] = b;
         out_data[4 * i + 3] = a;
     }
-    const res = c.stbi_write_png(
-        "test_screenshot.png",
-        p.surface.w,
-        p.surface.h,
-        4,
-        @ptrCast(out_data),
-        4 * p.surface.w,
-    );
-    if (res != 1) {
-        @panic("stbi_write_png failed\n");
-    }
+    return out_data;
 }
