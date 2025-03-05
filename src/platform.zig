@@ -18,9 +18,6 @@ pub const Platform = struct {
 
     const Self = @This();
 
-    // TODO-Matt: separate system init from opening window
-    // The actual app needs to init and open its window
-    // The screenshot tests need to init (to get access to the SDL event queue and font rendering), then make an isolated surface (maybe with c.SDL_CreateRGBSurface? Not tried yet) so test setup can be isolated from app start changes
     pub fn init() Self {
         const stderr = std.io.getStdErr();
         const stdout = std.io.getStdOut();
@@ -37,7 +34,7 @@ pub const Platform = struct {
             crash();
         }
 
-        return Self {
+        return Self{
             .window = null,
             .surface = null,
             .stdout = stdout,
@@ -89,6 +86,41 @@ pub const Platform = struct {
         var unnecessary: u8 = undefined;
         c.SDL_GetRGBA(pixel, self.surface.?.format, &colour.r, &colour.g, &colour.b, &unnecessary);
         return colour;
+    }
+
+    pub fn drawBuffer(self: Self, buffer: Buffer, bg_colour: Colour, fg_colour: Colour) !void {
+        var y_offset: usize = 0;
+        for (buffer.data.items) |line| {
+            const utf8Data = Utf8String{ .data = line.items };
+            try self.drawUtf8String(
+                utf8Data,
+                buffer.font,
+                .{ .x = 0, .y = y_offset },
+                bg_colour,
+                fg_colour,
+            );
+            y_offset += buffer.font.height;
+        }
+
+        const cursor_line = Utf8String{ .data = buffer.data.items[buffer.cursor_pos.y].items };
+        const cursor_pixel_pos = Position{
+            .x = try (cursor_line.width(buffer.font, 0, buffer.cursor_pos.x)),
+            .y = buffer.cursor_pos.y * buffer.font.height,
+        };
+        if (buffer.cursor_pos.x >= buffer.data.items[buffer.cursor_pos.y].items.len) {
+            const cursor_width = @divTrunc(buffer.font_size, 2);
+            try self.drawSimpleBlock(cursor_pixel_pos, cursor_width, buffer.font.height, fg_colour);
+        } else {
+            const cursor_char_width = (try cursor_line.getGlyph(buffer.font, buffer.cursor_pos.x)).width;
+            try self.drawCursor(
+                cursor_pixel_pos,
+                cursor_char_width,
+                buffer.font.height,
+                bg_colour,
+                fg_colour,
+                buffer.mode,
+            );
+        }
     }
 
     pub fn drawCharacter(self: Self, char: Utf8String.CodePoint, font: *Font, pos: Position, bg_colour: Colour, fg_colour: Colour) !usize {

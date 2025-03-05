@@ -19,7 +19,7 @@ pub fn build(b: *std.Build) void {
 
     const generate_screenshots_exe = b.addExecutable(.{
         .name = "generate-screenshots",
-        .root_source_file = b.path("src/test/generateScreenshots.zig"),
+        .root_source_file = b.path("src/generateScreenshots.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -32,7 +32,7 @@ pub fn build(b: *std.Build) void {
 
     const check_screenshots_exe = b.addExecutable(.{
         .name = "check-screenshots",
-        .root_source_file = b.path("src/test/checkScreenshots.zig"),
+        .root_source_file = b.path("src/checkScreenshots.zig"),
         .target = target,
         .optimize = optimize,
     });

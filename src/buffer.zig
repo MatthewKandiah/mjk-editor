@@ -9,6 +9,9 @@ const platform = @import("platform.zig");
 const Position = @import("position.zig").Position;
 const Font = @import("font.zig").Font;
 const Utf8String = @import("unicodeString.zig").Utf8String;
+const c = @cImport({
+    @cInclude("SDL2/SDL.h");
+});
 
 pub const Buffer = struct {
     data: ArrayList(ArrayListU8),
@@ -61,6 +64,29 @@ pub const Buffer = struct {
             try char_widths.append(line_char_widths);
         }
         // TODO-Matt: probably need to add an empty line if the input is empty, or we won't be able to position the cursor
+    }
+
+    pub fn flushUserEvents(self: *Self, p: *platform.Platform) bool {
+        var event: c.SDL_Event = undefined;
+        while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
+            if (event.type == c.SDL_QUIT) {
+                return false;
+            } else if (event.type == c.SDL_WINDOWEVENT) {
+                p.handleWindowResized();
+            } else if (event.type == c.SDL_KEYDOWN) {
+                switch (event.key.keysym.sym) {
+                    c.SDLK_ESCAPE => return false,
+                    c.SDLK_UP => self.handleMoveUp(),
+                    c.SDLK_DOWN => self.handleMoveDown(),
+                    c.SDLK_LEFT => self.handleMoveLeft(),
+                    c.SDLK_RIGHT => self.handleMoveRight(),
+                    c.SDLK_i => self.mode = .Insert,
+                    c.SDLK_n => self.switchToNormal(),
+                    else => p.print("Unhandled keypress\n", .{}),
+                }
+            }
+        }
+        return true;
     }
 
     pub fn write(self: Self, writer: AnyWriter) !void {

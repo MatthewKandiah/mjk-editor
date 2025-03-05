@@ -5,11 +5,71 @@ const c = @cImport({
     @cInclude("stb_image_write.h");
     @cInclude("SDL.h");
 });
+const Font = @import("../font.zig").Font;
 const platform = @import("../platform.zig");
+const Buffer = @import("../buffer.zig").Buffer;
+const Colour = @import("../colour.zig").Colour;
 
-// TODO-Matt: build test scenarios using SDL_PushEvent to simulate user actions
-pub fn buildScenario() !platform.Platform {
-    @panic("unimplemented\n");
+fn sdlKeyDownEvent(sym: c_int) c.SDL_Event {
+    return c.SDL_Event{ .key = .{ .keysym = .{ .sym = sym } } };
+}
+
+pub const UserEvent = enum {
+    right,
+
+    const Self = @This();
+
+    pub fn toSDLEvent(self: Self) c.SDL_Event {
+        return switch (self) {
+            .right => sdlKeyDownEvent(c.SDLK_RIGHT),
+        };
+    }
+};
+
+pub const ScenarioBuilder = struct {
+    user_events: std.ArrayList(UserEvent),
+
+    const Self = @This();
+
+    pub fn init(allocator: Allocator) *Self {
+        var result = allocator.create(Self) catch @panic("ERROR - failed to allocate builder");
+        result.user_events = std.ArrayList(UserEvent).init(allocator);
+        return result;
+    }
+
+    pub fn do(self: *Self, event: UserEvent) *Self {
+        self.user_events.append(event) catch @panic("ERROR - failed to append event to scenario");
+        return self;
+    }
+
+    pub fn fireEvents(self: Self, allocator: Allocator) !void {
+        var buf = try allocator.alloc(c.SDL_Event, self.user_events.items.len);
+        for (self.user_events.items, 0..) |user_event, i| {
+            buf[i] = user_event.toSDLEvent();
+            const res = c.SDL_PushEvent(&buf[i]);
+            if (res <= 0) {
+                @panic("ERROR - failed to push event to SDL event queue");
+            }
+        }
+    }
+};
+
+pub fn buildScenario(
+    allocator: Allocator,
+    buffer: *Buffer,
+    builder: *ScenarioBuilder,
+    bg_colour: Colour,
+    fg_colour: Colour,
+) !platform.Platform {
+    var p = platform.Platform.init();
+    const surface = c.SDL_CreateRGBSurface(0, 800, 600, 32, 0, 0, 0, 0) orelse platform.crash();
+    p.surface = @ptrCast(surface);
+
+    try builder.fireEvents(allocator);
+    _ = buffer.flushUserEvents(&p);
+    try p.drawBuffer(buffer.*, bg_colour, fg_colour);
+
+    return p;
 }
 
 pub fn writeScreenshot(allocator: Allocator, p: platform.Platform, screenshot_name: []const u8) !void {
@@ -17,11 +77,11 @@ pub fn writeScreenshot(allocator: Allocator, p: platform.Platform, screenshot_na
     defer allocator.free(out_data);
     const res = c.stbi_write_png(
         @ptrCast(screenshot_name),
-        p.surface.w,
-        p.surface.h,
+        p.surface.?.w,
+        p.surface.?.h,
         4,
         @ptrCast(out_data),
-        4 * p.surface.w,
+        4 * p.surface.?.w,
     );
     if (res != 1) {
         @panic("stbi_write_png failed\n");
@@ -63,15 +123,15 @@ pub fn checkScreenshot(allocator: Allocator, p: platform.Platform, screenshot_na
 }
 
 fn platformPixelDataToRGBA(allocator: Allocator, p: platform.Platform) ![]u8 {
-    const pixels: [*]u32 = @alignCast(@ptrCast(p.surface.pixels));
-    const pixel_count: usize = @intCast(p.surface.w * p.surface.h);
+    const pixels: [*]u32 = @alignCast(@ptrCast(p.surface.?.pixels));
+    const pixel_count: usize = @intCast(p.surface.?.w * p.surface.?.h);
     var out_data = try allocator.alloc(u8, 4 * pixel_count);
     for (pixels, 0..pixel_count) |pixel, i| {
         var r: u8 = undefined;
         var g: u8 = undefined;
         var b: u8 = undefined;
         var a: u8 = undefined;
-        c.SDL_GetRGBA(pixel, @ptrCast(p.surface.format), &r, &g, &b, &a);
+        c.SDL_GetRGBA(pixel, @ptrCast(p.surface.?.format), &r, &g, &b, &a);
         out_data[4 * i + 0] = r;
         out_data[4 * i + 1] = g;
         out_data[4 * i + 2] = b;
