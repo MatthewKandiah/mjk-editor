@@ -1,11 +1,11 @@
 const std = @import("std");
-const pf = @import("platform.zig");
+const mjk = @import("mjk");
+const pf = mjk.platform;
 const Platform = pf.Platform;
-const Font = @import("font.zig").Font;
-const Utf8String = @import("unicodeString.zig").Utf8String;
-const Colour = @import("colour.zig").Colour;
-const Position = @import("position.zig").Position;
-const screenshot = @import("test/screenshot.zig");
+const Font = mjk.font.Font;
+const Utf8String = mjk.unicodeString.Utf8String;
+const Colour = mjk.colour.Colour;
+const Position = mjk.position.Position;
 const c = @cImport({
     @cInclude("SDL2/SDL.h");
     @cInclude("SDL2/SDL_ttf.h");
@@ -32,8 +32,8 @@ pub fn main() !void {
         pf.crash();
     };
 
-    platform.window = window;
-    platform.surface = surface;
+    platform.window = @ptrCast(window);
+    platform.surface = @ptrCast(surface);
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();

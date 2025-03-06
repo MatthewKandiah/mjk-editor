@@ -1,8 +1,8 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const c = @cImport({
-    @cInclude("SDL.h");
-    @cInclude("SDL_ttf.h");
+    @cInclude("SDL2/SDL.h");
+    @cInclude("SDL2/SDL_ttf.h");
 });
 const Utf8String = @import("./unicodeString.zig").Utf8String;
 const Position = @import("./position.zig").Position;
