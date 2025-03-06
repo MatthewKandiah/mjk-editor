@@ -5,10 +5,11 @@ const c = @cImport({
     @cInclude("stb_image_write.h");
     @cInclude("SDL.h");
 });
-const Font = @import("../font.zig").Font;
-const platform = @import("../platform.zig");
-const Buffer = @import("../buffer.zig").Buffer;
-const Colour = @import("../colour.zig").Colour;
+const mjk = @import("mjk");
+const Font = mjk.font.Font;
+const platform = mjk.platform;
+const Buffer = mjk.buffer.Buffer;
+const Colour = mjk.colour.Colour;
 
 fn sdlKeyDownEvent(sym: c_int) c.SDL_Event {
     return c.SDL_Event{ .key = .{ .type = c.SDL_KEYDOWN, .keysym = .{ .sym = sym } } };

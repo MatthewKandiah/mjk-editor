@@ -15,12 +15,12 @@ pub fn build(b: *std.Build) void {
     exe.linkLibC();
     exe.linkSystemLibrary("SDL2");
     exe.linkSystemLibrary("SDL2_ttf");
-    exe.root_module.addImport("mjk", b.createModule(.{ .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "src/lib.zig" } } }));
+    exe.root_module.addImport("mjk", b.createModule(.{ .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "src/lib/lib.zig" } } }));
     b.installArtifact(exe);
 
     const generate_screenshots_exe = b.addExecutable(.{
         .name = "generate-screenshots",
-        .root_source_file = b.path("src/generateScreenshots.zig"),
+        .root_source_file = b.path("src/test/generateScreenshots.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -29,5 +29,6 @@ pub fn build(b: *std.Build) void {
     generate_screenshots_exe.linkLibC();
     generate_screenshots_exe.linkSystemLibrary("SDL2");
     generate_screenshots_exe.linkSystemLibrary("SDL2_ttf");
+    generate_screenshots_exe.root_module.addImport("mjk", b.createModule(.{ .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "src/lib/lib.zig" } } }));
     b.installArtifact(generate_screenshots_exe);
 }

@@ -1,8 +1,9 @@
 const std = @import("std");
-const screenshot = @import("./test/screenshot.zig");
-const platform = @import("./platform.zig");
-const Font = @import("./font.zig").Font;
-const Colour = @import("./colour.zig").Colour;
+const mjk = @import("mjk");
+const screenshot = @import("./screenshot.zig");
+const platform = mjk.platform;
+const Font = mjk.font.Font;
+const Colour = mjk.colour.Colour;
 const c = @cImport({
     @cInclude("SDL2/SDL_ttf.h");
 });
