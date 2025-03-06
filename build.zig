@@ -18,17 +18,17 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("mjk", b.createModule(.{ .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "src/lib/lib.zig" } } }));
     b.installArtifact(exe);
 
-    const generate_screenshots_exe = b.addExecutable(.{
-        .name = "generate-screenshots",
-        .root_source_file = b.path("src/test/generateScreenshots.zig"),
+    const screenshots_exe = b.addExecutable(.{
+        .name = "screenshot-test",
+        .root_source_file = b.path("src/test/screenshot-tests.zig"),
         .target = target,
         .optimize = optimize,
     });
-    generate_screenshots_exe.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "vendor" } });
-    generate_screenshots_exe.addCSourceFile(.{ .file = .{ .src_path = .{ .owner = b, .sub_path = "vendor/stb_impl.c" } } });
-    generate_screenshots_exe.linkLibC();
-    generate_screenshots_exe.linkSystemLibrary("SDL2");
-    generate_screenshots_exe.linkSystemLibrary("SDL2_ttf");
-    generate_screenshots_exe.root_module.addImport("mjk", b.createModule(.{ .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "src/lib/lib.zig" } } }));
-    b.installArtifact(generate_screenshots_exe);
+    screenshots_exe.addIncludePath(.{ .src_path = .{ .owner = b, .sub_path = "vendor" } });
+    screenshots_exe.addCSourceFile(.{ .file = .{ .src_path = .{ .owner = b, .sub_path = "vendor/stb_impl.c" } } });
+    screenshots_exe.linkLibC();
+    screenshots_exe.linkSystemLibrary("SDL2");
+    screenshots_exe.linkSystemLibrary("SDL2_ttf");
+    screenshots_exe.root_module.addImport("mjk", b.createModule(.{ .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "src/lib/lib.zig" } } }));
+    b.installArtifact(screenshots_exe);
 }

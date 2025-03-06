@@ -8,13 +8,22 @@ const c = @cImport({
     @cInclude("SDL2/SDL_ttf.h");
 });
 
-// TODO-Matt: command line argument to toggle check/generate instead of separate executables
-
 pub fn main() !void {
-    std.debug.print("Generating screenshots...\n", .{});
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
+    const args = try std.process.argsAlloc(allocator);
+    if (args.len > 2) {
+        std.debug.print("USAGE: Call with no arguments to check screenshots, call with argument `gen` to generate screenshots\n", .{});
+        platform.crash();
+    }
+    const generate = if (args.len == 2 and std.mem.eql(u8, args[1], "gen")) true else false;
+
+    if (generate) {
+        std.debug.print("Generating screenshots...\n", .{});
+    } else {
+        std.debug.print("Checking screenshots...\n", .{});
+    }
     if (c.TTF_Init() < 0) {
         @panic("ERROR - SDL TTF initialisation failed");
     }
