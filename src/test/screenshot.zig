@@ -11,7 +11,7 @@ const Buffer = @import("../buffer.zig").Buffer;
 const Colour = @import("../colour.zig").Colour;
 
 fn sdlKeyDownEvent(sym: c_int) c.SDL_Event {
-    return c.SDL_Event{ .key = .{ .keysym = .{ .sym = sym } } };
+    return c.SDL_Event{ .key = .{ .type = c.SDL_KEYDOWN, .keysym = .{ .sym = sym } } };
 }
 
 pub const UserEvent = enum {
