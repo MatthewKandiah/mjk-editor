@@ -16,12 +16,14 @@ fn sdlKeyDownEvent(sym: c_int) c.SDL_Event {
 
 pub const UserEvent = enum {
     right,
+    left,
 
     const Self = @This();
 
     pub fn toSDLEvent(self: Self) c.SDL_Event {
         return switch (self) {
             .right => sdlKeyDownEvent(c.SDLK_RIGHT),
+            .left => sdlKeyDownEvent(c.SDLK_LEFT),
         };
     }
 };

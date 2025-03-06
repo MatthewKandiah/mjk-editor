@@ -26,7 +26,7 @@ pub fn main() !void {
     var buffer = try platform.readFile(allocator, "debug/test.txt", &font, font_size);
     const builder = screenshot.ScenarioBuilder.init(allocator)
         .do(.right)
-        .do(.right);
+        .do(.left);
 
     const p = try screenshot.buildScenario(allocator, &buffer, builder, bg_colour, fg_colour);
 
