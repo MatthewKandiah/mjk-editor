@@ -66,12 +66,39 @@ pub fn buildScenario(
     var p = platform.Platform.init();
     const surface = c.SDL_CreateRGBSurface(0, 800, 600, 32, 0, 0, 0, 0) orelse platform.crash();
     p.surface = @ptrCast(surface);
+    p.clear(bg_colour);
 
     try builder.fireEvents(allocator);
     _ = buffer.flushUserEvents(&p);
     try p.drawBuffer(buffer.*, bg_colour, fg_colour);
 
     return p;
+}
+
+pub fn screenshotTest(
+    allocator: Allocator,
+    input_path: []const u8,
+    screenshot_name: []const u8,
+    builder: *ScenarioBuilder,
+    generate: bool,
+) !bool {
+    const font_filepath = "font/roboto/roboto-regular.ttf";
+    const font_size = 36;
+    var font = try Font.init(allocator, font_filepath, font_size);
+    try font.fillBasicGlyphs();
+
+    const bg_colour = Colour{ .r = 64, .g = 64, .b = 64 };
+    const fg_colour = Colour{ .r = 255, .g = 255, .b = 255 };
+
+    var buffer = try platform.readFile(allocator, input_path, &font, font_size);
+    const p = try buildScenario(allocator, &buffer, builder, bg_colour, fg_colour);
+
+    if (generate) {
+        try writeScreenshot(allocator, p, screenshot_name);
+        return true;
+    } else {
+        return checkScreenshot(allocator, p, screenshot_name);
+    }
 }
 
 pub fn writeScreenshot(allocator: Allocator, p: platform.Platform, screenshot_name: []const u8) !void {
@@ -110,8 +137,8 @@ pub fn checkScreenshot(allocator: Allocator, p: platform.Platform, screenshot_na
     defer c.stbi_image_free(screenshot_data);
 
     const pixel_count: usize = @intCast(screenshot_width * screenshot_height);
-    const expected_pixel_count: usize = @intCast(p.surface.w * p.surface.h);
-    if (pixel_count != p.surface.w * p.surface.h) {
+    const expected_pixel_count: usize = @intCast(p.surface.?.w * p.surface.?.h);
+    if (pixel_count != p.surface.?.w * p.surface.?.h) {
         p.printErr("Screenshot failed - expected pixel count: {}, actual pixel count: {}\n", .{ expected_pixel_count, pixel_count });
         return false;
     }
