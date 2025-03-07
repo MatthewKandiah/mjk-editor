@@ -38,6 +38,7 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
+    // TODO-Matt: embed fonts into executable
     // const font_filepath = "font/ubuntu-mono/ubuntu_mono.ttf";
     const font_filepath = "font/roboto/roboto-regular.ttf";
     const font_size = 36;

@@ -103,6 +103,13 @@ pub const ScenarioBuilder = struct {
         return self;
     }
 
+    pub fn doRepeated(self: *Self, event: UserEvent, n: usize) *Self {
+        for (0..n) |_| {
+            _ = self.do(event);
+        }
+        return self;
+    }
+
     pub fn fireEvents(self: Self, allocator: Allocator) !void {
         var buf = try allocator.alloc(c.SDL_Event, self.user_events.items.len);
         for (self.user_events.items, 0..) |user_event, i| {

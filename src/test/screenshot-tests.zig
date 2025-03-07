@@ -1,12 +1,21 @@
 const std = @import("std");
 const mjk = @import("mjk");
 const screenshot = @import("./screenshot.zig");
+const ScenarioBuilder = screenshot.ScenarioBuilder;
 const platform = mjk.platform;
 const Font = mjk.font.Font;
 const Colour = mjk.colour.Colour;
+const Allocator = std.mem.Allocator;
 const c = @cImport({
     @cInclude("SDL2/SDL_ttf.h");
 });
+
+const inputs_dir_path = "src/test/resources/inputs/";
+const outputs_dir_path = "src/test/resources/outputs/";
+
+var success_count: usize = 0;
+var total_count: usize = 0;
+var generate: bool = undefined;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -17,7 +26,7 @@ pub fn main() !void {
         std.debug.print("USAGE: Call with no arguments to check screenshots, call with argument `gen` to generate screenshots\n", .{});
         platform.crash();
     }
-    const generate = if (args.len == 2 and std.mem.eql(u8, args[1], "gen")) true else false;
+    generate = if (args.len == 2 and std.mem.eql(u8, args[1], "gen")) true else false;
 
     if (generate) {
         std.debug.print("Generating screenshots...\n", .{});
@@ -28,85 +37,49 @@ pub fn main() !void {
         @panic("ERROR - SDL TTF initialisation failed");
     }
 
-    const builder1 =
-        screenshot.ScenarioBuilder
-        .init(allocator)
-        .do(.right)
-        .do(.right)
-        .do(.left);
-
-    const builder2 =
-        screenshot.ScenarioBuilder
-        .init(allocator)
-        .do(.right)
-        .do(.right)
-        .do(.right);
-
-    var generate_count: usize = 0;
-
-    generate_count += if (try screenshot.screenshotTest(
+    try runTest(
         allocator,
-        "debug/test.txt",
-        "test_generate.png",
-        builder1,
-        true,
-    )) 1 else 0;
-
-    generate_count += if (try screenshot.screenshotTest(
-        allocator,
-        "debug/test.txt",
-        "test_generate_2.png",
-        builder2,
-        true,
-    )) 1 else 0;
-
-    var pass_count: usize = 0;
-    var fail_count: usize = 0;
-    var res: bool = undefined;
-
-    // pass
-    res = try screenshot.screenshotTest(
-        allocator,
-        "debug/test.txt",
-        "test_generate.png",
-        builder1,
-        false,
+        "hello-world.txt",
+        "hello-world-no-action.png",
+        ScenarioBuilder.init(allocator),
     );
-    if (res) {
-        pass_count += 1;
-    } else {
-        fail_count += 1;
-    }
 
-    // pass
-    res = try screenshot.screenshotTest(
+    try runTest(
         allocator,
-        "debug/test.txt",
-        "test_generate_2.png",
-        builder2,
-        false,
+        "hello-world.txt",
+        "hello-world-move-right.png",
+        ScenarioBuilder.init(allocator).do(.right),
     );
-    if (res) {
-        pass_count += 1;
-    } else {
-        fail_count += 1;
-    }
 
-    // fail
-    res = try screenshot.screenshotTest(
+    try runTest(
         allocator,
-        "debug/test.txt",
-        "test_generate.png",
-        builder2,
-        false,
+        "hello-world.txt",
+        "hello-world-move-right-then-left.png",
+        ScenarioBuilder.init(allocator).doRepeated(.right, 5).doRepeated(.left, 3),
     );
-    if (res) {
-        pass_count += 1;
-    } else {
-        fail_count += 1;
-    }
 
-    std.debug.print("generate_count: {}\n", .{generate_count});
-    std.debug.print("pass_count: {}\n", .{pass_count});
-    std.debug.print("fail_count: {}\n", .{fail_count});
+    reportResults();
+}
+
+fn runTest(allocator: Allocator, comptime input_name: []const u8, comptime output_name: []const u8, builder: *ScenarioBuilder) !void {
+    total_count += 1;
+    const result = screenshot.screenshotTest(
+        allocator,
+        inputs_dir_path ++ input_name,
+        outputs_dir_path ++ output_name,
+        builder,
+        generate,
+    ) catch false;
+    success_count += if (result) 1 else 0;
+    if (!result) {
+        std.debug.print("Test failed\n\tinput_name: {s}\n\toutput_name: {s}\n", .{ input_name, output_name });
+    }
+}
+
+fn reportResults() void {
+    if (generate) {
+        std.debug.print("Wrote {} out of {} screenshots\n", .{ success_count, total_count });
+    } else {
+        std.debug.print("Passed {} out of {} screenshots\n", .{ success_count, total_count });
+    }
 }
