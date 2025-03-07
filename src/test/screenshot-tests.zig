@@ -58,6 +58,22 @@ pub fn main() !void {
         ScenarioBuilder.init(allocator).doRepeated(.right, 5).doRepeated(.left, 3),
     );
 
+    try runTest(
+        allocator,
+        "hello-world-repeated.txt",
+        "hello-world-move-down.png",
+        ScenarioBuilder.init(allocator).doRepeated(.down, 4),
+    );
+
+    try runTest(
+        allocator,
+        "hello-world-repeated.txt",
+        "hello-world-move-down-then-up.png",
+        ScenarioBuilder.init(allocator)
+            .doRepeated(.down, 6)
+            .doRepeated(.up, 4),
+    );
+
     reportResults();
 }
 
