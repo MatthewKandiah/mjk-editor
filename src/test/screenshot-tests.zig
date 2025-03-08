@@ -74,6 +74,23 @@ pub fn main() !void {
             .doRepeated(.up, 4),
     );
 
+    try runTest(
+        allocator,
+        "hello-world.txt",
+        "hello-world-insert.png",
+        ScenarioBuilder.init(allocator)
+            .do(.i),
+    );
+
+    try runTest(
+        allocator,
+        "hello-world.txt",
+        "hello-world-insert-end-line.png",
+        ScenarioBuilder.init(allocator)
+            .do(.i)
+            .doRepeated(.right, 100),
+    );
+
     reportResults();
 }
 

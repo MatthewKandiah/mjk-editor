@@ -179,7 +179,7 @@ pub fn writeScreenshot(allocator: Allocator, p: platform.Platform, screenshot_na
         4 * p.surface.?.w,
     );
     if (res != 1) {
-        @panic("stbi_write_png failed\n");
+        return error.StbiWriteFailed;
     }
 }
 
@@ -198,7 +198,7 @@ pub fn checkScreenshot(allocator: Allocator, p: platform.Platform, screenshot_na
         4,
     );
     if (screenshot_data == null) {
-        @panic("stbi_load failed\n");
+        return error.StbiLoadFailed;
     }
     defer c.stbi_image_free(screenshot_data);
 
