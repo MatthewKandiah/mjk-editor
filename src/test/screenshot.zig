@@ -135,7 +135,7 @@ pub fn buildScenario(
     p.clear(bg_colour);
 
     try builder.fireEvents(allocator);
-    _ = buffer.flushUserEvents(&p);
+    _ = try buffer.flushUserEvents(&p);
     try p.drawBuffer(buffer.*, bg_colour, fg_colour);
 
     return p;

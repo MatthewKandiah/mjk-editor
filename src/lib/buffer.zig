@@ -66,7 +66,7 @@ pub const Buffer = struct {
         // TODO-Matt: probably need to add an empty line if the input is empty, or we won't be able to position the cursor
     }
 
-    pub fn flushUserEvents(self: *Self, p: *platform.Platform) bool {
+    pub fn flushUserEvents(self: *Self, p: *platform.Platform) !bool {
         var event: c.SDL_Event = undefined;
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
             if (event.type == c.SDL_QUIT) {
@@ -74,16 +74,39 @@ pub const Buffer = struct {
             } else if (event.type == c.SDL_WINDOWEVENT) {
                 p.handleWindowResized();
             } else if (event.type == c.SDL_KEYDOWN) {
-                switch (event.key.keysym.sym) {
-                    c.SDLK_ESCAPE => return false,
-                    c.SDLK_UP => self.handleMoveUp(),
-                    c.SDLK_DOWN => self.handleMoveDown(),
-                    c.SDLK_LEFT => self.handleMoveLeft(),
-                    c.SDLK_RIGHT => self.handleMoveRight(),
-                    c.SDLK_a, c.SDLK_b, c.SDLK_c, c.SDLK_d, c.SDLK_e, c.SDLK_f, c.SDLK_g, c.SDLK_h, c.SDLK_i, c.SDLK_j, c.SDLK_k, c.SDLK_l, c.SDLK_m, c.SDLK_n, c.SDLK_o, c.SDLK_p, c.SDLK_q, c.SDLK_r, c.SDLK_s, c.SDLK_t, c.SDLK_u, c.SDLK_v, c.SDLK_w, c.SDLK_x, c.SDLK_y, c.SDLK_z => |alpha| self.handleAlpha(alpha),
-                    else => p.print("Unhandled keypress\n", .{}),
-                }
+                const running = switch (self.mode) {
+                    .Insert => try self.handleKeyDownInsert(event.key.keysym.sym),
+                    .Normal => self.handleKeyDownNormal(event.key.keysym.sym),
+                };
+                if (!running) return false;
             }
+        }
+        return true;
+    }
+
+    fn handleKeyDownInsert(self: *Self, key: i32) !bool {
+        switch (key) {
+            c.SDLK_ESCAPE => self.switchToNormal(),
+            c.SDLK_UP => self.handleMoveUp(),
+            c.SDLK_DOWN => self.handleMoveDown(),
+            c.SDLK_LEFT => self.handleMoveLeft(),
+            c.SDLK_RIGHT => self.handleMoveRight(),
+            //TODO-Matt: Not sure if this is actually necessary, or if it's just the same as c.SDLK_a
+            c.SDLK_a...c.SDLK_z => |alpha| try self.insertChar(@intCast('a' + alpha - c.SDLK_a)),
+            else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
+        }
+        return true;
+    }
+
+    fn handleKeyDownNormal(self: *Self, key: i32) bool {
+        switch (key) {
+            c.SDLK_ESCAPE => return false,
+            c.SDLK_UP => self.handleMoveUp(),
+            c.SDLK_DOWN => self.handleMoveDown(),
+            c.SDLK_LEFT => self.handleMoveLeft(),
+            c.SDLK_RIGHT => self.handleMoveRight(),
+            c.SDLK_i => self.mode = .Insert,
+            else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
         }
         return true;
     }
@@ -173,5 +196,10 @@ pub const Buffer = struct {
     pub fn switchToNormal(self: *Self) void {
         self.mode = .Normal;
         self.setCursorToTargetX();
+    }
+
+    pub fn insertChar(self: *Self, char: u8) !void {
+        std.debug.print("TODO - insert character {c}\n", .{char});
+        self.cursor_pos.x += 1;
     }
 };

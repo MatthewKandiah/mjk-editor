@@ -56,7 +56,7 @@ pub fn main() !void {
     while (running) {
         platform.clear(bg_colour);
 
-        running = buffer.flushUserEvents(&platform);
+        running = try buffer.flushUserEvents(&platform);
         try platform.drawBuffer(buffer, bg_colour, fg_colour);
         platform.renderScreen();
     }
