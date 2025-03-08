@@ -80,13 +80,20 @@ pub const Buffer = struct {
                     c.SDLK_DOWN => self.handleMoveDown(),
                     c.SDLK_LEFT => self.handleMoveLeft(),
                     c.SDLK_RIGHT => self.handleMoveRight(),
-                    c.SDLK_i => self.mode = .Insert,
-                    c.SDLK_n => self.switchToNormal(),
+                    c.SDLK_a, c.SDLK_b, c.SDLK_c, c.SDLK_d, c.SDLK_e, c.SDLK_f, c.SDLK_g, c.SDLK_h, c.SDLK_i, c.SDLK_j, c.SDLK_k, c.SDLK_l, c.SDLK_m, c.SDLK_n, c.SDLK_o, c.SDLK_p, c.SDLK_q, c.SDLK_r, c.SDLK_s, c.SDLK_t, c.SDLK_u, c.SDLK_v, c.SDLK_w, c.SDLK_x, c.SDLK_y, c.SDLK_z => |alpha| self.handleAlpha(alpha),
                     else => p.print("Unhandled keypress\n", .{}),
                 }
             }
         }
         return true;
+    }
+
+    fn handleAlpha(self: *Self, alpha: c_int) void {
+        switch (alpha) {
+            c.SDLK_i => self.mode = .Insert,
+            c.SDLK_n => self.switchToNormal(),
+            else => std.debug.print("Unhandled alpha\n", .{}),
+        }
     }
 
     pub fn write(self: Self, writer: AnyWriter) !void {
