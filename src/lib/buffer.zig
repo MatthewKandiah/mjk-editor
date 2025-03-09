@@ -198,8 +198,13 @@ pub const Buffer = struct {
         self.setCursorToTargetX();
     }
 
+    // TODO-Matt: still doesn't work
     pub fn insertChar(self: *Self, char: u8) !void {
-        std.debug.print("TODO - insert character {c}\n", .{char});
+        const utf8_string = Utf8String{ .data = self.data.items[self.cursor_pos.y].items };
+        const byte_count = try utf8_string.byteCountToIndex(self.cursor_pos.x);
+
+        try self.data.items[self.cursor_pos.y].insert(byte_count, char);
+
         self.cursor_pos.x += 1;
     }
 };

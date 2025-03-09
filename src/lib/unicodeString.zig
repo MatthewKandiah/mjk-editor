@@ -75,4 +75,14 @@ pub const Utf8String = struct {
         }
         return error.GetGlyphFailed;
     }
+
+    pub fn byteCountToIndex(self: Self, index: usize) !usize {
+        var byte_count: usize = 0;
+        var current_index: usize = 0;
+        while (current_index < index) : (current_index += 1) {
+            const current_code_point_byte_count = try unicode.utf8ByteSequenceLength(self.data[byte_count]);
+            byte_count += current_code_point_byte_count;
+        }
+        return byte_count;
+    }
 };
