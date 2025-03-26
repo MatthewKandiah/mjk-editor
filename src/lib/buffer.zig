@@ -167,13 +167,10 @@ pub const Buffer = struct {
     }
 
     fn setCursorToTargetX(self: *Self) void {
-        std.debug.print("setCursorToTargetX called, initial state:\n", .{});
-        self.debugPrint();
         var x_pos: usize = 0;
         var x_displacement: usize = 0;
 
         if (self.mode == .Insert) {
-            std.debug.print("handle insert mode\n", .{});
             var total_width: usize = 0;
             for (self.char_widths.items[self.cursor_pos.y].items) |width| {
                 total_width += width;
@@ -184,26 +181,17 @@ pub const Buffer = struct {
             }
         }
 
-        std.debug.print("handle normal mode\n", .{});
-        std.debug.print("line length: {}\n", .{self.data.items[self.cursor_pos.y].items.len});
         while (x_pos < self.data.items[self.cursor_pos.y].items.len) {
-            std.debug.print("\twhile loop x_pos: {}\n", .{x_pos});
             x_displacement += self.char_widths.items[self.cursor_pos.y].items[x_pos];
             if (x_displacement > self.target_x_position) {
-                std.debug.print("exceeded target_x_position, break\n", .{});
                 break;
             }
             if (x_pos == self.data.items[self.cursor_pos.y].items.len - 1) {
-                std.debug.print("got to end of line\n", .{});
                 break;
             }
-            std.debug.print("incement x_pos", .{});
             x_pos += 1;
         }
-        // this is setting cursor_pos to the wrong value on exiting insertion mode
         self.cursor_pos.x = x_pos;
-        std.debug.print("setCursorToTargetX final state\n", .{});
-        self.debugPrint();
     }
 
     pub fn switchToNormal(self: *Self) void {
