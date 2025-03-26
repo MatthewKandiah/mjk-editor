@@ -174,6 +174,7 @@ pub const Buffer = struct {
         var x_displacement: usize = 0;
 
         if (self.mode == .Insert) {
+            std.debug.print("here\n", .{});
             var total_width: usize = 0;
             for (self.char_widths.items[self.cursor_pos.y].items) |width| {
                 total_width += width;
@@ -183,7 +184,8 @@ pub const Buffer = struct {
                 return;
             }
         }
-
+        
+        std.debug.print("in the normal mode bit\n", .{});
         while (x_pos < self.data.items[self.cursor_pos.y].items.len) {
             x_displacement += self.char_widths.items[self.cursor_pos.y].items[x_pos];
             if (x_displacement > self.target_x_position) {
@@ -194,6 +196,8 @@ pub const Buffer = struct {
             }
             x_pos += 1;
         }
+        self.debugPrint();
+        // this is setting cursor_pos to the wrong value on exiting insertion mode
         self.cursor_pos.x = x_pos;
     }
 
