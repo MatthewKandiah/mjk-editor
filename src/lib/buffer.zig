@@ -74,8 +74,9 @@ pub const Buffer = struct {
             } else if (event.type == c.SDL_WINDOWEVENT) {
                 p.handleWindowResized();
             } else if (event.type == c.SDL_KEYDOWN) {
+                const is_shift_held = event.key.keysym.mod & c.KMOD_SHIFT != 0;
                 const running = switch (self.mode) {
-                    .Insert => try self.handleKeyDownInsert(event.key.keysym.sym),
+                    .Insert => try self.handleKeyDownInsert(event.key.keysym.sym, is_shift_held),
                     .Normal => self.handleKeyDownNormal(event.key.keysym.sym),
                 };
                 if (!running) return false;
@@ -84,7 +85,7 @@ pub const Buffer = struct {
         return true;
     }
 
-    fn handleKeyDownInsert(self: *Self, key: i32) !bool {
+    fn handleKeyDownInsert(self: *Self, key: i32, is_shift_held: bool) !bool {
         switch (key) {
             c.SDLK_ESCAPE => self.switchToNormal(),
             c.SDLK_UP => self.handleMoveUp(),
@@ -92,8 +93,14 @@ pub const Buffer = struct {
             c.SDLK_LEFT => self.handleMoveLeft(),
             c.SDLK_RIGHT => self.handleMoveRight(),
             c.SDLK_a...c.SDLK_z => |alpha| {
-                try self.insertChar(@intCast('a' + alpha - c.SDLK_a));
+                const capitalisation_shift = 'a' - 'A';
+                if (is_shift_held) {
+                    try self.insertChar(@intCast('a' + alpha - c.SDLK_a - capitalisation_shift));
+                } else {
+                    try self.insertChar(@intCast('a' + alpha - c.SDLK_a));
+                }
             },
+            c.SDLK_SPACE => try self.insertChar(' '),
             else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
         }
         return true;
@@ -110,14 +117,6 @@ pub const Buffer = struct {
             else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
         }
         return true;
-    }
-
-    fn handleAlpha(self: *Self, alpha: c_int) void {
-        switch (alpha) {
-            c.SDLK_i => self.mode = .Insert,
-            c.SDLK_n => self.switchToNormal(),
-            else => std.debug.print("Unhandled alpha\n", .{}),
-        }
     }
 
     pub fn write(self: Self, writer: AnyWriter) !void {
