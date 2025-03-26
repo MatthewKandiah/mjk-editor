@@ -93,9 +93,6 @@ pub const Buffer = struct {
             c.SDLK_RIGHT => self.handleMoveRight(),
             c.SDLK_a...c.SDLK_z => |alpha| {
                 try self.insertChar(@intCast('a' + alpha - c.SDLK_a));
-                std.debug.print("After: \n", .{});
-                self.debugPrint();
-                std.debug.print("___________________________________________________________________________________________________________\n", .{});
             },
             else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
         }
@@ -170,11 +167,13 @@ pub const Buffer = struct {
     }
 
     fn setCursorToTargetX(self: *Self) void {
+        std.debug.print("setCursorToTargetX called, initial state:\n", .{});
+        self.debugPrint();
         var x_pos: usize = 0;
         var x_displacement: usize = 0;
 
         if (self.mode == .Insert) {
-            std.debug.print("here\n", .{});
+            std.debug.print("handle insert mode\n", .{});
             var total_width: usize = 0;
             for (self.char_widths.items[self.cursor_pos.y].items) |width| {
                 total_width += width;
@@ -184,21 +183,27 @@ pub const Buffer = struct {
                 return;
             }
         }
-        
-        std.debug.print("in the normal mode bit\n", .{});
+
+        std.debug.print("handle normal mode\n", .{});
+        std.debug.print("line length: {}\n", .{self.data.items[self.cursor_pos.y].items.len});
         while (x_pos < self.data.items[self.cursor_pos.y].items.len) {
+            std.debug.print("\twhile loop x_pos: {}\n", .{x_pos});
             x_displacement += self.char_widths.items[self.cursor_pos.y].items[x_pos];
             if (x_displacement > self.target_x_position) {
+                std.debug.print("exceeded target_x_position, break\n", .{});
                 break;
             }
             if (x_pos == self.data.items[self.cursor_pos.y].items.len - 1) {
+                std.debug.print("got to end of line\n", .{});
                 break;
             }
+            std.debug.print("incement x_pos", .{});
             x_pos += 1;
         }
-        self.debugPrint();
         // this is setting cursor_pos to the wrong value on exiting insertion mode
         self.cursor_pos.x = x_pos;
+        std.debug.print("setCursorToTargetX final state\n", .{});
+        self.debugPrint();
     }
 
     pub fn switchToNormal(self: *Self) void {
@@ -227,8 +232,6 @@ pub const Buffer = struct {
     }
 
     pub fn insertChar(self: *Self, char: u8) !void {
-        std.debug.print("Before: \n", .{});
-        self.debugPrint();
         const utf8_string = Utf8String{ .data = self.data.items[self.cursor_pos.y].items };
         const byte_count = try utf8_string.byteCountToIndex(self.cursor_pos.x);
 
@@ -237,6 +240,6 @@ pub const Buffer = struct {
         try self.char_widths.items[self.cursor_pos.y].insert(self.cursor_pos.x, added_char.width);
 
         self.cursor_pos.x += 1;
-        self.target_x_position += 1;
+        self.target_x_position += added_char.width;
     }
 };
