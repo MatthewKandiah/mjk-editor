@@ -91,8 +91,12 @@ pub const Buffer = struct {
             c.SDLK_DOWN => self.handleMoveDown(),
             c.SDLK_LEFT => self.handleMoveLeft(),
             c.SDLK_RIGHT => self.handleMoveRight(),
-            //TODO-Matt: Not sure if this is actually necessary, or if it's just the same as c.SDLK_a
-            c.SDLK_a...c.SDLK_z => |alpha| try self.insertChar(@intCast('a' + alpha - c.SDLK_a)),
+            c.SDLK_a...c.SDLK_z => |alpha| {
+                try self.insertChar(@intCast('a' + alpha - c.SDLK_a));
+                std.debug.print("After: \n", .{});
+                self.debugPrint();
+                std.debug.print("___________________________________________________________________________________________________________\n", .{});
+            },
             else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
         }
         return true;
@@ -198,13 +202,37 @@ pub const Buffer = struct {
         self.setCursorToTargetX();
     }
 
-    // TODO-Matt: still doesn't work
+    pub fn debugPrintText(self: *Self) void {
+        for (self.data.items) |line| {
+            std.debug.print("{s}\n", .{line.items});
+        }
+    }
+    pub fn debugPrintCharWidths(self: *Self) void {
+        for (self.char_widths.items) |widths| {
+            std.debug.print("{any}\n", .{widths.items});
+        }
+    }
+
+    pub fn debugPrint(self: *Self) void {
+        std.debug.print("text: \n", .{});
+        self.debugPrintText();
+        std.debug.print("char_widths: \n", .{});
+        self.debugPrintCharWidths();
+        std.debug.print("cursor_pos: {}\n", .{self.cursor_pos});
+        std.debug.print("target_x_pos: {}\n", .{self.target_x_position});
+    }
+
     pub fn insertChar(self: *Self, char: u8) !void {
+        std.debug.print("Before: \n", .{});
+        self.debugPrint();
         const utf8_string = Utf8String{ .data = self.data.items[self.cursor_pos.y].items };
         const byte_count = try utf8_string.byteCountToIndex(self.cursor_pos.x);
 
         try self.data.items[self.cursor_pos.y].insert(byte_count, char);
+        const added_char = try self.font.get(char);
+        try self.char_widths.items[self.cursor_pos.y].insert(self.cursor_pos.x, added_char.width);
 
         self.cursor_pos.x += 1;
+        self.target_x_position += 1;
     }
 };
