@@ -95,9 +95,9 @@ pub const Buffer = struct {
             c.SDLK_a...c.SDLK_z => |alpha| {
                 const capitalisation_shift = 'a' - 'A';
                 if (is_shift_held) {
-                    try self.insertChar(@intCast('a' + alpha - c.SDLK_a - capitalisation_shift));
+                    try self.insertChar(@intCast(alpha - capitalisation_shift));
                 } else {
-                    try self.insertChar(@intCast('a' + alpha - c.SDLK_a));
+                    try self.insertChar(@intCast(alpha));
                 }
             },
             c.SDLK_SPACE => try self.insertChar(' '),
