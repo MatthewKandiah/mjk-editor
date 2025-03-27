@@ -75,8 +75,9 @@ pub const Buffer = struct {
                 p.handleWindowResized();
             } else if (event.type == c.SDL_KEYDOWN) {
                 const is_shift_held = event.key.keysym.mod & c.KMOD_SHIFT != 0;
+                const is_caps_lock_active = event.key.keysym.mod & c.KMOD_CAPS != 0;
                 const running = switch (self.mode) {
-                    .Insert => try self.handleKeyDownInsert(event.key.keysym.sym, is_shift_held),
+                    .Insert => try self.handleKeyDownInsert(event.key.keysym.sym, is_shift_held, is_caps_lock_active),
                     .Normal => self.handleKeyDownNormal(event.key.keysym.sym),
                 };
                 if (!running) return false;
@@ -85,7 +86,7 @@ pub const Buffer = struct {
         return true;
     }
 
-    fn handleKeyDownInsert(self: *Self, key: i32, is_shift_held: bool) !bool {
+    fn handleKeyDownInsert(self: *Self, key: i32, is_shift_held: bool, is_caps_lock_active: bool) !bool {
         switch (key) {
             c.SDLK_ESCAPE => self.switchToNormal(),
             c.SDLK_UP => self.handleMoveUp(),
@@ -94,7 +95,8 @@ pub const Buffer = struct {
             c.SDLK_RIGHT => self.handleMoveRight(),
             c.SDLK_a...c.SDLK_z => |alpha| {
                 const capitalisation_shift = 'a' - 'A';
-                if (is_shift_held) {
+                const should_capitalise = (is_caps_lock_active and !is_shift_held) or (!is_caps_lock_active and is_shift_held);
+                if (should_capitalise) {
                     try self.insertChar(@intCast(alpha - capitalisation_shift));
                 } else {
                     try self.insertChar(@intCast(alpha));
