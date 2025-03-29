@@ -87,9 +87,6 @@ pub const Buffer = struct {
         return true;
     }
 
-    // TODO-Matt: SDL Keycodes for printable characters are represented by their Unicode code points
-    // think we can use that fact to avoid writing a massive switch statement!
-    // https://wiki.libsdl.org/SDL2/SDLKeycodeLookup
     fn handleKeyDownInsert(self: *Self, key: i32, is_shift_held: bool, is_caps_lock_active: bool) !bool {
         switch (key) {
             c.SDLK_ESCAPE => self.switchToNormal(),
@@ -127,7 +124,13 @@ pub const Buffer = struct {
                 }
             },
             c.SDLK_SPACE => try self.insertCodePoint(' '),
-            else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
+            else => |value| {
+                if (value <= std.math.maxInt(Utf8String.CodePoint) and unicode.utf8ValidCodepoint(@intCast(value))) {
+                    try self.insertCodePoint(@intCast(value));
+                } else {
+                    std.debug.print("Unhandled insert mode keypress char {}\n", .{key});
+                }
+            },
         }
         return true;
     }
