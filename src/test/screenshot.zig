@@ -15,6 +15,8 @@ fn sdlKeyDownEvent(sym: c_int) c.SDL_Event {
     return c.SDL_Event{ .key = .{ .type = c.SDL_KEYDOWN, .keysym = .{ .sym = sym } } };
 }
 
+// TODO-Matt: sdlTextInputEvent and builder support to emit both keydown and textinput events where appropriate
+
 pub const UserEvent = enum {
     right,
     left,
