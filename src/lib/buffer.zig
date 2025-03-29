@@ -3,6 +3,7 @@ const ArrayList = std.ArrayList;
 const ArrayListU8 = ArrayList(u8);
 const Allocator = std.mem.Allocator;
 const io = std.io;
+const unicode = std.unicode;
 const AnyReader = io.AnyReader;
 const AnyWriter = io.AnyWriter;
 const platform = @import("platform.zig");
@@ -93,16 +94,36 @@ pub const Buffer = struct {
             c.SDLK_DOWN => self.handleMoveDown(),
             c.SDLK_LEFT => self.handleMoveLeft(),
             c.SDLK_RIGHT => self.handleMoveRight(),
+            c.SDLK_0...c.SDLK_9 => |num| {
+                if (is_shift_held) {
+                    const insert_char: u8 = switch (@as(u8, @intCast(num))) {
+                        '1' => '!',
+                        '2' => '"',
+                        '3' => '£',
+                        '4' => '$',
+                        '5' => '%',
+                        '6' => '^',
+                        '7' => '&',
+                        '8' => '*',
+                        '9' => '(',
+                        '0' => ')',
+                        else => std.debug.panic("Unexpected shift-num combo\n", .{}),
+                    };
+                    try self.insertCodePoint(insert_char);
+                } else {
+                    try self.insertCodePoint(@intCast(num));
+                }
+            },
             c.SDLK_a...c.SDLK_z => |alpha| {
                 const capitalisation_shift = 'a' - 'A';
                 const should_capitalise = (is_caps_lock_active and !is_shift_held) or (!is_caps_lock_active and is_shift_held);
                 if (should_capitalise) {
-                    try self.insertChar(@intCast(alpha - capitalisation_shift));
+                    try self.insertCodePoint(@intCast(alpha - capitalisation_shift));
                 } else {
-                    try self.insertChar(@intCast(alpha));
+                    try self.insertCodePoint(@intCast(alpha));
                 }
             },
-            c.SDLK_SPACE => try self.insertChar(' '),
+            c.SDLK_SPACE => try self.insertCodePoint(' '),
             else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
         }
         return true;
@@ -220,12 +241,17 @@ pub const Buffer = struct {
         std.debug.print("target_x_pos: {}\n", .{self.target_x_position});
     }
 
-    pub fn insertChar(self: *Self, char: u8) !void {
+    pub fn insertCodePoint(self: *Self, code_point: Utf8String.CodePoint) !void {
         const utf8_string = Utf8String{ .data = self.data.items[self.cursor_pos.y].items };
         const byte_count = try utf8_string.byteCountToIndex(self.cursor_pos.x);
 
-        try self.data.items[self.cursor_pos.y].insert(byte_count, char);
-        const added_char = try self.font.get(char);
+        var buffer: [4]u8 = undefined;
+        const code_point_byte_count = try unicode.utf8Encode(code_point, &buffer);
+
+        for (0..code_point_byte_count) |i| {
+            try self.data.items[self.cursor_pos.y].insert(byte_count + i, buffer[i]);
+        }
+        const added_char = try self.font.get(code_point);
         try self.char_widths.items[self.cursor_pos.y].insert(self.cursor_pos.x, added_char.width);
 
         self.cursor_pos.x += 1;
