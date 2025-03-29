@@ -74,11 +74,16 @@ pub const Buffer = struct {
                 return false;
             } else if (event.type == c.SDL_WINDOWEVENT) {
                 p.handleWindowResized();
+            } else if (event.type == c.SDL_TEXTINPUT) {
+                const code_point_byte_count = try unicode.utf8ByteSequenceLength(event.text.text[0]);
+                const code_point = try unicode.utf8Decode(event.text.text[0..code_point_byte_count]);
+                switch (self.mode) {
+                    .Insert => try self.handleTextInputInsert(code_point),
+                    .Normal => try self.handleTextInputNormal(code_point),
+                }
             } else if (event.type == c.SDL_KEYDOWN) {
-                const is_shift_held = event.key.keysym.mod & c.KMOD_SHIFT != 0;
-                const is_caps_lock_active = event.key.keysym.mod & c.KMOD_CAPS != 0;
                 const running = switch (self.mode) {
-                    .Insert => try self.handleKeyDownInsert(event.key.keysym.sym, is_shift_held, is_caps_lock_active),
+                    .Insert => try self.handleKeyDownInsert(event.key.keysym.sym),
                     .Normal => self.handleKeyDownNormal(event.key.keysym.sym),
                 };
                 if (!running) return false;
@@ -87,50 +92,25 @@ pub const Buffer = struct {
         return true;
     }
 
-    fn handleKeyDownInsert(self: *Self, key: i32, is_shift_held: bool, is_caps_lock_active: bool) !bool {
+    fn handleTextInputInsert(self: *Self, codePoint: Utf8String.CodePoint) !void {
+        try self.insertCodePoint(codePoint);
+    }
+
+    fn handleTextInputNormal(self: *Self, codePoint: Utf8String.CodePoint) !void {
+        switch (codePoint) {
+            'i' => self.mode = .Insert,
+            else => std.debug.print("Unhandled normal mode text input code point {}\n", .{codePoint}),
+        }
+    }
+
+    fn handleKeyDownInsert(self: *Self, key: i32) !bool {
         switch (key) {
             c.SDLK_ESCAPE => self.switchToNormal(),
             c.SDLK_UP => self.handleMoveUp(),
             c.SDLK_DOWN => self.handleMoveDown(),
             c.SDLK_LEFT => self.handleMoveLeft(),
             c.SDLK_RIGHT => self.handleMoveRight(),
-            c.SDLK_0...c.SDLK_9 => |num| {
-                if (is_shift_held) {
-                    const insert_char: u8 = switch (@as(u8, @intCast(num))) {
-                        '1' => '!',
-                        '2' => '"',
-                        '3' => '£',
-                        '4' => '$',
-                        '5' => '%',
-                        '6' => '^',
-                        '7' => '&',
-                        '8' => '*',
-                        '9' => '(',
-                        '0' => ')',
-                        else => std.debug.panic("Unexpected shift-num combo\n", .{}),
-                    };
-                    try self.insertCodePoint(insert_char);
-                } else {
-                    try self.insertCodePoint(@intCast(num));
-                }
-            },
-            c.SDLK_a...c.SDLK_z => |alpha| {
-                const capitalisation_shift = 'a' - 'A';
-                const should_capitalise = (is_caps_lock_active and !is_shift_held) or (!is_caps_lock_active and is_shift_held);
-                if (should_capitalise) {
-                    try self.insertCodePoint(@intCast(alpha - capitalisation_shift));
-                } else {
-                    try self.insertCodePoint(@intCast(alpha));
-                }
-            },
-            c.SDLK_SPACE => try self.insertCodePoint(' '),
-            else => |value| {
-                if (value <= std.math.maxInt(Utf8String.CodePoint) and unicode.utf8ValidCodepoint(@intCast(value))) {
-                    try self.insertCodePoint(@intCast(value));
-                } else {
-                    std.debug.print("Unhandled insert mode keypress char {}\n", .{key});
-                }
-            },
+            else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
         }
         return true;
     }
@@ -142,7 +122,6 @@ pub const Buffer = struct {
             c.SDLK_DOWN => self.handleMoveDown(),
             c.SDLK_LEFT => self.handleMoveLeft(),
             c.SDLK_RIGHT => self.handleMoveRight(),
-            c.SDLK_i => self.mode = .Insert,
             else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
         }
         return true;
