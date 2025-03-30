@@ -15,7 +15,9 @@ fn sdlKeyDownEvent(sym: c_int) c.SDL_Event {
     return c.SDL_Event{ .key = .{ .type = c.SDL_KEYDOWN, .keysym = .{ .sym = sym } } };
 }
 
-// TODO-Matt: sdlTextInputEvent and builder support to emit both keydown and textinput events where appropriate
+fn sdlTextInputEvent(data: [32]u8) c.SDL_Event {
+    return c.SDL_Event{ .text = .{ .type = c.SDL_TEXTINPUT, .text = data } };
+}
 
 pub const UserEvent = enum {
     right,
@@ -52,7 +54,7 @@ pub const UserEvent = enum {
 
     const Self = @This();
 
-    pub fn toSDLEvent(self: Self) c.SDL_Event {
+    pub fn toSDLKeyDownEvent(self: Self) c.SDL_Event {
         return switch (self) {
             .right => sdlKeyDownEvent(c.SDLK_RIGHT),
             .left => sdlKeyDownEvent(c.SDLK_LEFT),
@@ -87,6 +89,42 @@ pub const UserEvent = enum {
             .z => sdlKeyDownEvent(c.SDLK_z),
         };
     }
+
+    pub fn toSDLTextInputEvent(self: Self) ?c.SDL_Event {
+        return switch (self) {
+            .right => null,
+            .left => null,
+            .up => null,
+            .down => null,
+            .escape => null,
+            .a => sdlTextInputEvent(.{ 'a', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .b => sdlTextInputEvent(.{ 'b', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .c => sdlTextInputEvent(.{ 'c', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .d => sdlTextInputEvent(.{ 'd', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .e => sdlTextInputEvent(.{ 'e', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .f => sdlTextInputEvent(.{ 'f', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .g => sdlTextInputEvent(.{ 'g', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .h => sdlTextInputEvent(.{ 'h', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .i => sdlTextInputEvent(.{ 'i', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .j => sdlTextInputEvent(.{ 'j', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .k => sdlTextInputEvent(.{ 'k', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .l => sdlTextInputEvent(.{ 'l', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .m => sdlTextInputEvent(.{ 'm', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .n => sdlTextInputEvent(.{ 'n', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .o => sdlTextInputEvent(.{ 'o', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .p => sdlTextInputEvent(.{ 'p', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .q => sdlTextInputEvent(.{ 'q', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .r => sdlTextInputEvent(.{ 'r', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .s => sdlTextInputEvent(.{ 's', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .t => sdlTextInputEvent(.{ 't', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .u => sdlTextInputEvent(.{ 'u', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .v => sdlTextInputEvent(.{ 'v', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .w => sdlTextInputEvent(.{ 'w', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .x => sdlTextInputEvent(.{ 'x', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .y => sdlTextInputEvent(.{ 'y', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            .z => sdlTextInputEvent(.{ 'z', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+        };
+    }
 };
 
 pub const ScenarioBuilder = struct {
@@ -113,14 +151,30 @@ pub const ScenarioBuilder = struct {
     }
 
     pub fn fireEvents(self: Self, allocator: Allocator) !void {
-        var buf = try allocator.alloc(c.SDL_Event, self.user_events.items.len);
-        for (self.user_events.items, 0..) |user_event, i| {
-            buf[i] = user_event.toSDLEvent();
+        var buf = try allocator.alloc(c.SDL_Event, 2 * self.user_events.items.len);
+        var count: usize = 0;
+
+        for (self.user_events.items) |user_event| {
+            const keyDownEvent = user_event.toSDLKeyDownEvent();
+            const maybeTextInputEvent = user_event.toSDLTextInputEvent();
+            if (maybeTextInputEvent) |textInputEvent| {
+                buf[count] = keyDownEvent;
+                buf[count + 1] = textInputEvent;
+                count += 2;
+            } else {
+                buf[count] = keyDownEvent;
+                count += 1;
+            }
+        }
+
+        for (0..count) |i| {
             const res = c.SDL_PushEvent(&buf[i]);
             if (res <= 0) {
                 @panic("ERROR - failed to push event to SDL event queue");
             }
         }
+
+        allocator.free(buf);
     }
 };
 
