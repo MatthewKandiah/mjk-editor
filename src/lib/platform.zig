@@ -203,15 +203,23 @@ pub fn crash() noreturn {
 
 pub fn readFile(allocator: Allocator, path: []const u8, font: *Font, font_size: usize) !Buffer {
     const cwd = std.fs.cwd();
-    const file = try cwd.openFile(path, std.fs.File.OpenFlags{ .mode = .read_only });
-    defer file.close();
-
-    return Buffer.init(allocator, file.reader().any(), font, font_size, path);
+    if (cwd.openFile(path, std.fs.File.OpenFlags{ .mode = .read_only })) |file| {
+        defer file.close();
+        return Buffer.init(allocator, file.reader().any(), font, font_size, path);
+    } else |err| switch (err) {
+        error.FileNotFound => {
+            var buf: [0]u8 = .{};
+            var fbs = std.io.fixedBufferStream(&buf);
+            const reader = fbs.reader().any();
+            return Buffer.init(allocator, reader, font, font_size, path);
+        },
+        else => std.debug.panic("Unexpected error reading file\n", .{}),
+    }
 }
 
-pub fn writeFile(path: []const u8, buffer: Buffer) !void {
+pub fn writeBuffer(buffer: Buffer) !void {
     const cwd = std.fs.cwd();
-    const file = cwd.openFile(path, std.fs.File.OpenFlags{ .mode = .write_only }) catch try cwd.createFile(path, .{});
+    const file = cwd.openFile(buffer.path, std.fs.File.OpenFlags{ .mode = .write_only }) catch try cwd.createFile(buffer.path, .{});
     defer file.close();
 
     try buffer.write(file.writer().any());

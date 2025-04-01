@@ -39,6 +39,19 @@ pub const Buffer = struct {
             var line = ArrayListU8.init(allocator);
             reader.streamUntilDelimiter(line.writer().any(), '\n', null) catch |err| {
                 if (err == error.EndOfStream) {
+                    const utf8_string = Utf8String{ .data = line.items };
+                    var utf8_iter = try utf8_string.iterate();
+                    var glyph = utf8_iter.next();
+                    var line_char_widths = ArrayList(usize).init(allocator);
+                    while (glyph != null) : (glyph = utf8_iter.next()) {
+                        const glyph_info = try font.get(glyph.?);
+                        try line_char_widths.append(glyph_info.width);
+                    }
+                    if (line.items.len > 0 or lines.items.len == 0) {
+                        // we've hit the end of stream after some characters, or we've got an empty file and need to insert one line to keep the cursor position meaningful
+                        try lines.append(line);
+                        try char_widths.append(line_char_widths);
+                    }
                     return Self{
                         .data = lines,
                         .char_widths = char_widths,
@@ -66,7 +79,6 @@ pub const Buffer = struct {
             try lines.append(line);
             try char_widths.append(line_char_widths);
         }
-        // TODO-Matt: probably need to add an empty line if the input is empty, or we won't be able to position the cursor
     }
 
     pub fn flushUserEvents(self: *Self, p: *platform.Platform) !bool {

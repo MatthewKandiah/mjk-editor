@@ -11,6 +11,9 @@ const c = @cImport({
     @cInclude("SDL2/SDL_ttf.h");
 });
 
+const bg_colour = Colour{ .r = 64, .g = 64, .b = 64 };
+const fg_colour = Colour{ .r = 255, .g = 255, .b = 255 };
+
 // TODO-Matt: memory use and cpu use profiling
 pub fn main() !void {
     var platform = Platform.init();
@@ -45,12 +48,12 @@ pub fn main() !void {
     var font = try Font.init(allocator, font_filepath, font_size);
     try font.fillBasicGlyphs();
 
-    const in_filepath = "debug/test.txt";
-    const out_filepath = "debug/test.out.txt";
-    var buffer = try pf.readFile(allocator, in_filepath, &font, font_size);
+    var arg_iter = try std.process.argsWithAllocator(allocator);
+    defer arg_iter.deinit();
+    _ = arg_iter.skip();
+    const filepath = arg_iter.next() orelse std.debug.panic("Missing first argument\n", .{});
 
-    const bg_colour = Colour{ .r = 64, .g = 64, .b = 64 };
-    const fg_colour = Colour{ .r = 255, .g = 255, .b = 255 };
+    var buffer = try pf.readFile(allocator, filepath, &font, font_size);
 
     var running = true;
     while (running) {
@@ -61,5 +64,5 @@ pub fn main() !void {
         platform.renderScreen();
     }
 
-    try pf.writeFile(out_filepath, buffer);
+    try pf.writeBuffer(buffer);
 }
