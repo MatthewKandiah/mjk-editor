@@ -202,15 +202,16 @@ pub fn crash() noreturn {
 }
 
 pub fn readFile(allocator: Allocator, path: []const u8, font: *Font, font_size: usize) !Buffer {
-    const file = try std.fs.cwd().openFile(path, std.fs.File.OpenFlags{ .mode = .read_only });
+    const cwd = std.fs.cwd();
+    const file = try cwd.openFile(path, std.fs.File.OpenFlags{ .mode = .read_only });
     defer file.close();
 
     return Buffer.init(allocator, file.reader().any(), font, font_size);
 }
 
 pub fn writeFile(path: []const u8, buffer: Buffer) !void {
-    // TODO-Matt: Create file if it doesn't exist
-    const file = try std.fs.cwd().openFile(path, std.fs.File.OpenFlags{ .mode = .write_only });
+    const cwd = std.fs.cwd();
+    const file = cwd.openFile(path, std.fs.File.OpenFlags{ .mode = .write_only }) catch try cwd.createFile(path, .{});
     defer file.close();
 
     try buffer.write(file.writer().any());
