@@ -23,6 +23,7 @@ pub const Buffer = struct {
     font: *Font,
     font_size: usize,
     mode: Mode,
+    path: []const u8,
 
     const Self = @This();
 
@@ -31,7 +32,7 @@ pub const Buffer = struct {
         Insert,
     };
 
-    pub fn init(allocator: Allocator, reader: AnyReader, font: *Font, font_size: usize) !Self {
+    pub fn init(allocator: Allocator, reader: AnyReader, font: *Font, font_size: usize, path: []const u8) !Self {
         var lines = ArrayList(ArrayListU8).init(allocator);
         var char_widths = ArrayList(ArrayList(usize)).init(allocator);
         while (true) {
@@ -47,6 +48,7 @@ pub const Buffer = struct {
                         .mode = .Normal,
                         .font = font,
                         .font_size = font_size,
+                        .path = path,
                     };
                 } else {
                     return err;

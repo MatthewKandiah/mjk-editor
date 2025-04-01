@@ -206,7 +206,7 @@ pub fn readFile(allocator: Allocator, path: []const u8, font: *Font, font_size: 
     const file = try cwd.openFile(path, std.fs.File.OpenFlags{ .mode = .read_only });
     defer file.close();
 
-    return Buffer.init(allocator, file.reader().any(), font, font_size);
+    return Buffer.init(allocator, file.reader().any(), font, font_size, path);
 }
 
 pub fn writeFile(path: []const u8, buffer: Buffer) !void {
