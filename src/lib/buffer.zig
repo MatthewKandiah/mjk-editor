@@ -81,14 +81,16 @@ pub const Buffer = struct {
         }
     }
 
-    pub fn flushUserEvents(self: *Self, p: *platform.Platform) !bool {
+    pub fn flushUserEvents(self: *Self, p: *platform.Platform, redraw_needed: *bool) !bool {
         var event: c.SDL_Event = undefined;
         while (c.SDL_PollEvent(@ptrCast(&event)) != 0) {
             if (event.type == c.SDL_QUIT) {
                 return false;
             } else if (event.type == c.SDL_WINDOWEVENT) {
+                redraw_needed.* = true;
                 p.handleWindowResized();
             } else if (event.type == c.SDL_TEXTINPUT) {
+                redraw_needed.* = true;
                 const code_point_byte_count = try unicode.utf8ByteSequenceLength(event.text.text[0]);
                 const code_point = try unicode.utf8Decode(event.text.text[0..code_point_byte_count]);
                 switch (self.mode) {
@@ -96,6 +98,7 @@ pub const Buffer = struct {
                     .Normal => try self.handleTextInputNormal(code_point),
                 }
             } else if (event.type == c.SDL_KEYDOWN) {
+                redraw_needed.* = true;
                 const running = switch (self.mode) {
                     .Insert => try self.handleKeyDownInsert(event.key.keysym.sym),
                     .Normal => self.handleKeyDownNormal(event.key.keysym.sym),

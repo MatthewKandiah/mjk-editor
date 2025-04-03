@@ -56,12 +56,15 @@ pub fn main() !void {
     var buffer = try pf.readFile(allocator, filepath, &font, font_size);
 
     var running = true;
+    var redraw_needed = true;
     while (running) {
         platform.clear(bg_colour);
 
-        running = try buffer.flushUserEvents(&platform);
-        try platform.drawBuffer(buffer, bg_colour, fg_colour);
-        platform.renderScreen();
+        running = try buffer.flushUserEvents(&platform, &redraw_needed);
+        if (redraw_needed) {
+            try platform.drawBuffer(buffer, bg_colour, fg_colour);
+            platform.renderScreen();
+        }
     }
 
     try pf.writeBuffer(buffer);

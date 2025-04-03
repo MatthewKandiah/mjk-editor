@@ -191,7 +191,8 @@ pub fn buildScenario(
     p.clear(bg_colour);
 
     try builder.fireEvents(allocator);
-    _ = try buffer.flushUserEvents(&p);
+    var redraw_needed = false;
+    _ = try buffer.flushUserEvents(&p, &redraw_needed);
     try p.drawBuffer(buffer.*, bg_colour, fg_colour);
 
     return p;
