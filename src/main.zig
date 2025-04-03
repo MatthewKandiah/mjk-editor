@@ -58,12 +58,13 @@ pub fn main() !void {
     var running = true;
     var redraw_needed = true;
     while (running) {
-        platform.clear(bg_colour);
 
         running = try buffer.flushUserEvents(&platform, &redraw_needed);
         if (redraw_needed) {
+            platform.clear(bg_colour);
             try platform.drawBuffer(buffer, bg_colour, fg_colour);
             platform.renderScreen();
+            redraw_needed = false;
         }
     }
 
