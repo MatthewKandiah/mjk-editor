@@ -127,6 +127,7 @@ pub const Buffer = struct {
             c.SDLK_DOWN => self.handleMoveDown(),
             c.SDLK_LEFT => self.handleMoveLeft(),
             c.SDLK_RIGHT => self.handleMoveRight(),
+            c.SDLK_RETURN => try self.insertNewLine(),
             else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
         }
         return true;
@@ -166,6 +167,22 @@ pub const Buffer = struct {
         if (self.cursor_pos.x + 1 >= self.maxXPos()) return;
         self.cursor_pos.x += 1;
         self.updateTargetXPosition();
+    }
+
+    pub fn insertNewLine(self: *Self) !void {
+        var line_copy = try self.data.items[self.cursor_pos.y].clone();
+        var char_widths_copy = try self.char_widths.items[self.cursor_pos.y].clone();
+
+        self.data.items[self.cursor_pos.y].shrinkRetainingCapacity(self.cursor_pos.x);
+        line_copy.replaceRangeAssumeCapacity(0, self.cursor_pos.x, &.{});
+
+        self.char_widths.items[self.cursor_pos.y].shrinkRetainingCapacity(self.cursor_pos.x);
+        char_widths_copy.replaceRangeAssumeCapacity(0, self.cursor_pos.x, &.{});
+
+        self.cursor_pos.x = 0;
+        self.cursor_pos.y += 1;
+        try self.data.insert(self.cursor_pos.y, line_copy);
+        try self.char_widths.insert(self.cursor_pos.y, char_widths_copy);
     }
 
     fn updateTargetXPosition(self: *Self) void {
