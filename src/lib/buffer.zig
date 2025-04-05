@@ -128,6 +128,7 @@ pub const Buffer = struct {
             c.SDLK_LEFT => self.handleMoveLeft(),
             c.SDLK_RIGHT => self.handleMoveRight(),
             c.SDLK_RETURN => try self.insertNewLine(),
+            c.SDLK_BACKSPACE => try self.handleBackspace(),
             else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
         }
         return true;
@@ -183,6 +184,25 @@ pub const Buffer = struct {
         self.cursor_pos.y += 1;
         try self.data.insert(self.cursor_pos.y, line_copy);
         try self.char_widths.insert(self.cursor_pos.y, char_widths_copy);
+    }
+
+    pub fn handleBackspace(self: *Self) !void {
+        if (self.cursor_pos.x == 0) {
+            if (self.cursor_pos.y == 0) {
+                return;
+            }
+            const updated_x_pos = self.data.items[self.cursor_pos.y - 1].items.len;
+            try self.data.items[self.cursor_pos.y - 1].appendSlice(self.data.items[self.cursor_pos.y].items);
+            try self.char_widths.items[self.cursor_pos.y - 1].appendSlice(self.char_widths.items[self.cursor_pos.y].items);
+            _ = self.data.orderedRemove(self.cursor_pos.y);
+            _ = self.char_widths.orderedRemove(self.cursor_pos.y);
+            self.cursor_pos = .{ .x = updated_x_pos, .y = self.cursor_pos.y - 1 };
+        } else {
+            _ = self.data.items[self.cursor_pos.y].orderedRemove(self.cursor_pos.x - 1);
+            _ = self.char_widths.items[self.cursor_pos.y].orderedRemove(self.cursor_pos.x - 1);
+            self.cursor_pos.x -= 1;
+        }
+        self.updateTargetXPosition();
     }
 
     fn updateTargetXPosition(self: *Self) void {
