@@ -42,6 +42,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     // TODO-Matt: embed fonts into executable
+    // TODO-Matt: hotkey to swap fonts
     // const font_filepath = "font/ubuntu-mono/ubuntu_mono.ttf";
     const font_filepath = "font/roboto/roboto-regular.ttf";
     const font_size = 36;
@@ -58,7 +59,6 @@ pub fn main() !void {
     var running = true;
     var redraw_needed = true;
     while (running) {
-
         running = try buffer.flushUserEvents(&platform, &redraw_needed);
         if (redraw_needed) {
             platform.clear(bg_colour);
