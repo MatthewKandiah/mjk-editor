@@ -118,6 +118,10 @@ pub const Buffer = struct {
     fn handleTextInputNormal(self: *Self, codePoint: Utf8String.CodePoint) !void {
         switch (codePoint) {
             'i' => self.mode = .Insert,
+            'a' => {
+                self.mode = .Insert;
+                self.handleMoveRight();
+            },
             else => std.debug.print("Unhandled normal mode text input code point {}\n", .{codePoint}),
         }
     }
