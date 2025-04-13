@@ -11,6 +11,11 @@ const platform = mjk.platform;
 const Buffer = mjk.buffer.Buffer;
 const Colour = mjk.colour.Colour;
 
+// TODO-Matt: screenshot test generator
+//          - capture initial buffer state
+//          - capture user inputs
+//          - generate screenshot test with those two
+
 fn sdlKeyDownEvent(sym: c_int) c.SDL_Event {
     return c.SDL_Event{ .key = .{ .type = c.SDL_KEYDOWN, .keysym = .{ .sym = sym } } };
 }
