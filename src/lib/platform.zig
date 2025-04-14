@@ -93,6 +93,9 @@ pub const Platform = struct {
         const soft_wrapping_overflow_margin = buffer.font_size;
         for (buffer.data.items) |line| {
             const utf8Data = Utf8String{ .data = line.items };
+            // TODO-Matt: should we just include an `is_cursor` flag and `cursor_type` arg here, and draw the cursor when we get to the character on the first pass?
+            //            chose not to originally because I thought it would make multicursor support harder in future, but maybe not, we would just have multiple positions where 
+            //            is_cursor was true
             const lines_drawn = try self.drawUtf8String(
                 @intCast(self.surface.?.w),
                 utf8Data,
