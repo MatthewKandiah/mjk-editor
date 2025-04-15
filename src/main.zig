@@ -42,7 +42,6 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     // TODO-Matt: embed fonts into executable
-    // TODO-Matt: hotkey to swap fonts
     // const font_filepath = "font/ubuntu-mono/ubuntu_mono.ttf";
     const font_filepath = "font/roboto/roboto-regular.ttf";
     const font_size = 36;

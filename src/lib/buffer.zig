@@ -14,7 +14,7 @@ const c = @cImport({
     @cInclude("SDL2/SDL.h");
 });
 
-// TODO-Matt: handle lines that overflow the screen - either soft wrapping, or running off the screen
+// TODO-Matt: support vertical buffer scrolling
 // TODO-Matt: support multiple open buffers
 pub const Buffer = struct {
     data: ArrayList(ArrayListU8),
