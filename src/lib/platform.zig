@@ -124,6 +124,7 @@ pub const Platform = struct {
         return glyph.width;
     }
 
+    // TODO-Matt: soft-wrapping
     pub fn drawUtf8String(
         self: Self,
         data: Utf8String,
