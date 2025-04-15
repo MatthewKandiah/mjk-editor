@@ -92,7 +92,7 @@ pub const Platform = struct {
         var y_offset: usize = 0;
         for (buffer.data.items, 0..) |line, line_num| {
             const utf8Data = Utf8String{ .data = line.items };
-            try self.drawUtf8String(
+            const drawn_line_count = try self.drawUtf8String(
                 utf8Data,
                 buffer.font,
                 .{ .x = 0, .y = y_offset },
@@ -103,8 +103,9 @@ pub const Platform = struct {
                     .Normal => .Block,
                     .Insert => .Line,
                 },
+                buffer.char_widths.items[line_num].items,
             );
-            y_offset += buffer.font.height;
+            y_offset += buffer.font.height * drawn_line_count;
         }
     }
 
@@ -124,7 +125,6 @@ pub const Platform = struct {
         return glyph.width;
     }
 
-    // TODO-Matt: soft-wrapping
     pub fn drawUtf8String(
         self: Self,
         data: Utf8String,
@@ -134,14 +134,29 @@ pub const Platform = struct {
         fg_colour: Colour,
         maybe_cursor_x: ?usize,
         cursor_draw_type: CursorDrawType,
-    ) !void {
+        char_widths: []usize,
+    ) !usize {
         var iter = try data.iterate();
         var current = iter.next();
         var x_index: usize = 0;
         var x_offset: usize = 0;
+        const screen_width: usize = @intCast(self.surface.?.w);
+        var line_count: usize = 0;
         while (current) |char| {
-            const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y };
+            const next_char_width = char_widths[x_index];
+            var draw_pos: Position = undefined;
+            if (pos.x + x_offset + next_char_width >= screen_width) {
+                line_count += 1;
+                x_offset = 0;
+                draw_pos = .{ .x = pos.x, .y = pos.y + font.height * line_count };
+            } else {
+                draw_pos = .{ .x = pos.x + x_offset, .y = pos.y + font.height * line_count };
+            }
             const drawn_char_width = try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
+            if (next_char_width != drawn_char_width) {
+                self.printErr("ASSERT: drawn character width did not match buffer data\n", .{});
+                crash();
+            }
             if (maybe_cursor_x == x_index) {
                 try self.drawCursor(draw_pos, drawn_char_width, font.height, bg_colour, fg_colour, cursor_draw_type);
             }
@@ -153,7 +168,7 @@ pub const Platform = struct {
 
         if (maybe_cursor_x) |cursor_x| {
             if (cursor_x >= x_index) {
-                const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y };
+                const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y + font.height * line_count };
                 try self.drawSimpleBlock(
                     draw_pos,
                     font.height / 2,
@@ -162,6 +177,7 @@ pub const Platform = struct {
                 );
             }
         }
+        return line_count + 1;
     }
 
     pub fn drawCursor(self: Self, pos: Position, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour, cursor_draw_type: CursorDrawType) !void {
