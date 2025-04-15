@@ -91,6 +91,35 @@ pub fn main() !void {
             .doRepeated(.right, 100),
     );
 
+    try runTest(
+        allocator,
+        "long-lines.txt",
+        "soft-wrapped-normal.png",
+        ScenarioBuilder.init(allocator)
+            .doRepeated(.down, 2)
+            .doRepeated(.right, 75),
+    );
+
+    try runTest(
+        allocator,
+        "long-lines.txt",
+        "soft-wrapped-insert.png",
+        ScenarioBuilder.init(allocator)
+            .doRepeated(.down, 2)
+            .doRepeated(.right, 75)
+            .do(.i),
+    );
+
+    try runTest(
+        allocator,
+        "long-lines.txt",
+        "soft-wrapped-insert-endline.png",
+        ScenarioBuilder.init(allocator)
+            .doRepeated(.down, 2)
+            .doRepeated(.right, 500)
+            .do(.a),
+    );
+
     reportResults();
 }
 
