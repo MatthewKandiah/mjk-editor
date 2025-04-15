@@ -206,7 +206,7 @@ pub fn buildScenario(
 pub fn screenshotTest(
     allocator: Allocator,
     input_path: []const u8,
-    screenshot_name: []const u8,
+    comptime screenshot_name: []const u8,
     builder: *ScenarioBuilder,
     generate: bool,
 ) !bool {

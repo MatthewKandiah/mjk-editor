@@ -90,37 +90,21 @@ pub const Platform = struct {
 
     pub fn drawBuffer(self: Self, buffer: Buffer, bg_colour: Colour, fg_colour: Colour) !void {
         var y_offset: usize = 0;
-        for (buffer.data.items) |line| {
+        for (buffer.data.items, 0..) |line, line_num| {
             const utf8Data = Utf8String{ .data = line.items };
-             try self.drawUtf8String(
+            try self.drawUtf8String(
                 utf8Data,
                 buffer.font,
                 .{ .x = 0, .y = y_offset },
                 bg_colour,
                 fg_colour,
+                if (line_num == buffer.cursor_pos.y) buffer.cursor_pos.x else null,
+                switch (buffer.mode) {
+                    .Normal => .Block,
+                    .Insert => .Line,
+                },
             );
             y_offset += buffer.font.height;
-        }
-
-        const cursor_line = Utf8String{ .data = buffer.data.items[buffer.cursor_pos.y].items };
-        const unwrapped_cursor_x_pos = try cursor_line.width(buffer.font, 0, buffer.cursor_pos.x);
-        const cursor_pixel_pos = Position{
-            .x = unwrapped_cursor_x_pos,
-            .y = buffer.cursor_pos.y * buffer.font.height,
-        };
-        if (buffer.cursor_pos.x >= buffer.data.items[buffer.cursor_pos.y].items.len) {
-            const cursor_width = @divTrunc(buffer.font_size, 2);
-            try self.drawSimpleBlock(cursor_pixel_pos, cursor_width, buffer.font.height, fg_colour);
-        } else {
-            const cursor_char_width = (try cursor_line.getGlyph(buffer.font, buffer.cursor_pos.x)).width;
-            try self.drawCursor(
-                cursor_pixel_pos,
-                cursor_char_width,
-                buffer.font.height,
-                bg_colour,
-                fg_colour,
-                buffer.mode,
-            );
         }
     }
 
@@ -147,22 +131,44 @@ pub const Platform = struct {
         pos: Position,
         bg_colour: Colour,
         fg_colour: Colour,
+        maybe_cursor_x: ?usize,
+        cursor_draw_type: CursorDrawType,
     ) !void {
         var iter = try data.iterate();
         var current = iter.next();
+        var x_index: usize = 0;
         var x_offset: usize = 0;
-        while (current) |char| : (current = iter.next()) {
+        while (current) |char| {
             const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y };
-            x_offset += try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
+            const drawn_char_width = try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
+            if (maybe_cursor_x == x_index) {
+                try self.drawCursor(draw_pos, drawn_char_width, font.height, bg_colour, fg_colour, cursor_draw_type);
+            }
+
+            x_offset += drawn_char_width;
+            x_index += 1;
+            current = iter.next();
+        }
+
+        if (maybe_cursor_x) |cursor_x| {
+            if (cursor_x >= x_index) {
+                const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y };
+                try self.drawSimpleBlock(
+                    draw_pos,
+                    font.height / 2,
+                    font.height,
+                    fg_colour,
+                );
+            }
         }
     }
 
-    pub fn drawCursor(self: Self, pos: Position, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour, mode: Buffer.Mode) !void {
-        switch (mode) {
-            .Normal => {
+    pub fn drawCursor(self: Self, pos: Position, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour, cursor_draw_type: CursorDrawType) !void {
+        switch (cursor_draw_type) {
+            .Block => {
                 try self.drawBlockCursor(pos, width, height, bg_colour, fg_colour);
             },
-            .Insert => {
+            .Line => {
                 try self.drawLineCursor(pos, height, fg_colour);
             },
         }
@@ -231,3 +237,8 @@ pub fn writeBuffer(buffer: Buffer) !void {
 
     try buffer.write(file.writer().any());
 }
+
+const CursorDrawType = enum {
+    Line,
+    Block,
+};
