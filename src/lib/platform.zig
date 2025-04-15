@@ -142,15 +142,13 @@ pub const Platform = struct {
         var x_offset: usize = 0;
         const screen_width: usize = @intCast(self.surface.?.w);
         var line_count: usize = 0;
+        var draw_pos: Position = pos;
         while (current) |char| {
             const next_char_width = char_widths[x_index];
-            var draw_pos: Position = undefined;
             if (pos.x + x_offset + next_char_width >= screen_width) {
                 line_count += 1;
                 x_offset = 0;
                 draw_pos = .{ .x = pos.x, .y = pos.y + font.height * line_count };
-            } else {
-                draw_pos = .{ .x = pos.x + x_offset, .y = pos.y + font.height * line_count };
             }
             const drawn_char_width = try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
             if (next_char_width != drawn_char_width) {
@@ -164,11 +162,11 @@ pub const Platform = struct {
             x_offset += drawn_char_width;
             x_index += 1;
             current = iter.next();
+            draw_pos = .{ .x = pos.x + x_offset, .y = pos.y + font.height * line_count };
         }
 
         if (maybe_cursor_x) |cursor_x| {
             if (cursor_x >= x_index) {
-                const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y + font.height * line_count };
                 try self.drawSimpleBlock(
                     draw_pos,
                     font.height / 2,
