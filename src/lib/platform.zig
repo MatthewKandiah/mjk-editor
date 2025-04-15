@@ -90,46 +90,21 @@ pub const Platform = struct {
 
     pub fn drawBuffer(self: Self, buffer: Buffer, bg_colour: Colour, fg_colour: Colour) !void {
         var y_offset: usize = 0;
-        const soft_wrapping_overflow_margin = buffer.font_size;
-        for (buffer.data.items) |line| {
+        for (buffer.data.items, 0..) |line, line_num| {
             const utf8Data = Utf8String{ .data = line.items };
-            // TODO-Matt: should we just include an `is_cursor` flag and `cursor_type` arg here, and draw the cursor when we get to the character on the first pass?
-            //            chose not to originally because I thought it would make multicursor support harder in future, but maybe not, we would just have multiple positions where 
-            //            is_cursor was true
-            const lines_drawn = try self.drawUtf8String(
-                @intCast(self.surface.?.w),
+            try self.drawUtf8String(
                 utf8Data,
                 buffer.font,
-                soft_wrapping_overflow_margin,
                 .{ .x = 0, .y = y_offset },
                 bg_colour,
                 fg_colour,
+                if (line_num == buffer.cursor_pos.y) buffer.cursor_pos.x else null,
+                switch (buffer.mode) {
+                    .Normal => .Block,
+                    .Insert => .Line,
+                },
             );
-            y_offset += buffer.font.height * lines_drawn;
-        }
-
-        const cursor_line = Utf8String{ .data = buffer.data.items[buffer.cursor_pos.y].items };
-        const unwrapped_cursor_x_pos = try cursor_line.width(buffer.font, 0, buffer.cursor_pos.x);
-        // TODO-Matt: use surface width and soft_wrapping_overflow_margin to trim this to correct x position
-        // TODO-Matt: This still isn't going to work easily, we need to know how many lines were soft-wrapped before this one too
-        //            Can get this from the char widths of previous lines + int division of unwrapped_cursor_x_pos by (surface width - soft_wrapping_overflow_margin) ?
-        const cursor_pixel_pos = Position{
-            .x = unwrapped_cursor_x_pos,
-            .y = buffer.cursor_pos.y * buffer.font.height,
-        };
-        if (buffer.cursor_pos.x >= buffer.data.items[buffer.cursor_pos.y].items.len) {
-            const cursor_width = @divTrunc(buffer.font_size, 2);
-            try self.drawSimpleBlock(cursor_pixel_pos, cursor_width, buffer.font.height, fg_colour);
-        } else {
-            const cursor_char_width = (try cursor_line.getGlyph(buffer.font, buffer.cursor_pos.x)).width;
-            try self.drawCursor(
-                cursor_pixel_pos,
-                cursor_char_width,
-                buffer.font.height,
-                bg_colour,
-                fg_colour,
-                buffer.mode,
-            );
+            y_offset += buffer.font.height;
         }
     }
 
@@ -151,40 +126,49 @@ pub const Platform = struct {
 
     pub fn drawUtf8String(
         self: Self,
-        screen_width: usize,
         data: Utf8String,
         font: *Font,
-        overflow_margin: usize,
         pos: Position,
         bg_colour: Colour,
         fg_colour: Colour,
-    ) !usize {
+        maybe_cursor_x: ?usize,
+        cursor_draw_type: CursorDrawType,
+    ) !void {
         var iter = try data.iterate();
         var current = iter.next();
-        var lines_drawn: usize = 0;
-        var line_width: usize = 0;
+        var x_index: usize = 0;
         var x_offset: usize = 0;
-        while (current) |char| : (current = iter.next()) {
-            const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y + font.height * lines_drawn };
-            const drawn_width = try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
-            line_width += drawn_width;
-            if (line_width >= screen_width - overflow_margin) {
-                x_offset = 0;
-                lines_drawn += 1;
-                line_width = 0;
-            } else {
-                x_offset += drawn_width;
+        while (current) |char| {
+            const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y };
+            const drawn_char_width = try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
+            if (maybe_cursor_x == x_index) {
+                try self.drawCursor(draw_pos, drawn_char_width, font.height, bg_colour, fg_colour, cursor_draw_type);
+            }
+
+            x_offset += drawn_char_width;
+            x_index += 1;
+            current = iter.next();
+        }
+
+        if (maybe_cursor_x) |cursor_x| {
+            if (cursor_x >= x_index) {
+                const draw_pos = Position{ .x = pos.x + x_offset, .y = pos.y };
+                try self.drawSimpleBlock(
+                    draw_pos,
+                    font.height / 2,
+                    font.height,
+                    fg_colour,
+                );
             }
         }
-        return lines_drawn + 1;
     }
 
-    pub fn drawCursor(self: Self, pos: Position, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour, mode: Buffer.Mode) !void {
-        switch (mode) {
-            .Normal => {
+    pub fn drawCursor(self: Self, pos: Position, width: usize, height: usize, bg_colour: Colour, fg_colour: Colour, cursor_draw_type: CursorDrawType) !void {
+        switch (cursor_draw_type) {
+            .Block => {
                 try self.drawBlockCursor(pos, width, height, bg_colour, fg_colour);
             },
-            .Insert => {
+            .Line => {
                 try self.drawLineCursor(pos, height, fg_colour);
             },
         }
@@ -253,3 +237,8 @@ pub fn writeBuffer(buffer: Buffer) !void {
 
     try buffer.write(file.writer().any());
 }
+
+const CursorDrawType = enum {
+    Line,
+    Block,
+};
