@@ -14,7 +14,6 @@ const c = @cImport({
 const bg_colour = Colour{ .r = 64, .g = 64, .b = 64 };
 const fg_colour = Colour{ .r = 255, .g = 255, .b = 255 };
 
-// TODO-Matt: memory use and cpu use profiling
 // TODO-Matt: add line numbers
 // TODO-Matt: support more normal mode navigation options
 // TODO-Matt: support command mode
@@ -41,6 +40,9 @@ pub fn main() !void {
     platform.window = @ptrCast(window);
     platform.surface = @ptrCast(surface);
 
+    // TODO-Matt: can't spot an out-the-box way to track heap allocations
+    //            might need to write an allocator that takes a backing allocator, and keeps track of total memory allocated and freed?
+    //            can't find anything to easily track stack memory either, but that's limited to ~a few megabytes at most, so probably not worth worrying about
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
