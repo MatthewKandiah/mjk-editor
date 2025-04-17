@@ -8,6 +8,7 @@ const c = @cImport({
 const mjk = @import("mjk");
 const Font = mjk.font.Font;
 const platform = mjk.platform;
+const printErr = platform.printErr;
 const Buffer = mjk.buffer.Buffer;
 const Colour = mjk.colour.Colour;
 
@@ -289,7 +290,7 @@ pub fn checkScreenshot(allocator: Allocator, p: platform.Platform, screenshot_na
     const pixel_count: usize = @intCast(screenshot_width * screenshot_height);
     const expected_pixel_count: usize = @intCast(p.surface.?.w * p.surface.?.h);
     if (pixel_count != p.surface.?.w * p.surface.?.h) {
-        p.printErr("Screenshot failed - expected pixel count: {}, actual pixel count: {}\n", .{ expected_pixel_count, pixel_count });
+        printErr("Screenshot failed - expected pixel count: {}, actual pixel count: {}\n", .{ expected_pixel_count, pixel_count });
         return false;
     }
 

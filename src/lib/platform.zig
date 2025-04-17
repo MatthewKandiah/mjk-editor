@@ -10,35 +10,42 @@ const Position = @import("position.zig").Position;
 const Colour = @import("colour.zig").Colour;
 const Utf8String = @import("unicodeString.zig").Utf8String;
 
+const std_err = std.io.getStdErr();
+const std_out = std.io.getStdOut();
+
+pub fn print(comptime fmt: []const u8, args: anytype) void {
+    std_out.writer().print(fmt, args) catch {};
+}
+
+pub fn printErr(comptime fmt: []const u8, args: anytype) void {
+    std_err.writer().print(fmt, args) catch {};
+}
+
+pub fn reportErr(comptime msg: []const u8, args: anytype) noreturn {
+    printErr("ERROR: " ++ msg ++ "\n", args);
+    crash();
+}
+
 pub const Platform = struct {
     window: ?*c.SDL_Window,
     surface: ?*c.SDL_Surface,
-    stdout: std.fs.File,
-    stderr: std.fs.File,
 
     const Self = @This();
 
     pub fn init() Self {
-        const stderr = std.io.getStdErr();
-        const stdout = std.io.getStdOut();
-
         const sdl_init = c.SDL_Init(c.SDL_INIT_VIDEO | c.SDL_INIT_EVENTS);
         if (sdl_init != 0) {
-            _ = stderr.write("ERROR - SDL_Init failed\n") catch {};
-            crash();
+            reportErr("SDL_Init failed", .{});
         }
 
         const ttf_init = c.TTF_Init();
         if (ttf_init != 0) {
-            _ = stderr.write("ERROR - TTF_Init failed\n") catch {};
-            crash();
+            reportErr("TTF_Init failed", .{});
         }
 
         return Self{
             .window = null,
             .surface = null,
-            .stdout = stdout,
-            .stderr = stderr,
         };
     }
 
@@ -47,23 +54,10 @@ pub const Platform = struct {
         buffer.screen_height = @intCast(self.surface.?.h);
     }
 
-    pub fn print(self: Self, comptime fmt: []const u8, args: anytype) void {
-        self.stdout.writer().print(fmt, args) catch {};
-    }
-
-    pub fn printErr(self: Self, comptime fmt: []const u8, args: anytype) void {
-        self.stderr.writer().print(fmt, args) catch {};
-    }
-
-    pub fn reportErr(self: Self, comptime msg: []const u8, args: anytype) noreturn {
-        self.printErr("ERROR: " ++ msg ++ "\n", args);
-        crash();
-    }
-
     pub fn renderScreen(self: Self) void {
         const res = c.SDL_UpdateWindowSurface(self.window);
         if (res != 0) {
-            self.reportErr("Failed to render screen", .{});
+            reportErr("Failed to render screen", .{});
         }
     }
 
@@ -161,7 +155,7 @@ pub const Platform = struct {
             }
             const drawn_char_width = try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
             if (next_char_width != drawn_char_width) {
-                self.reportErr("drawn character width did not match buffer data", .{});
+                reportErr("drawn character width did not match buffer data", .{});
             }
             if (maybe_cursor_x == x_index) {
                 try self.drawCursor(draw_pos, drawn_char_width, font.height, bg_colour, fg_colour, cursor_draw_type);
