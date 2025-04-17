@@ -217,6 +217,9 @@ pub const Platform = struct {
         for (0..height) |j| {
             for (0..width) |i| {
                 std.debug.assert(surface_bytes_per_pixel == 4);
+                const x = pos.x + i;
+                const screen_width: usize = @intCast(self.surface.?.w);
+                if (x >= screen_width) continue;
                 const adjusted_pos = .{ .x = pos.x + i, .y = pos.y + j };
                 self.setPixelColour(
                     adjusted_pos,
