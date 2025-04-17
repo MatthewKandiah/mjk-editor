@@ -15,6 +15,11 @@ const bg_colour = Colour{ .r = 64, .g = 64, .b = 64 };
 const fg_colour = Colour{ .r = 255, .g = 255, .b = 255 };
 
 // TODO-Matt: memory use and cpu use profiling
+// TODO-Matt: add line numbers
+// TODO-Matt: support more normal mode navigation options
+// TODO-Matt: support command mode
+// TODO-Matt: support multiple open buffers
+// TODO-Matt: keyword highlighting - based on file extension, set fg and bg colour for keywords
 pub fn main() !void {
     var platform = Platform.init();
 

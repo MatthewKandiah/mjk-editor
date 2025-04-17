@@ -14,7 +14,7 @@ const c = @cImport({
     @cInclude("SDL2/SDL.h");
 });
 
-// TODO-Matt: support multiple open buffers
+// TODO-Matt: refactor - some of this information is about the data, some of this information is just about how we want to draw it. Feels like we should untangle those two.
 pub const Buffer = struct {
     data: ArrayList(ArrayListU8),
     char_widths: ArrayList(ArrayList(usize)),
