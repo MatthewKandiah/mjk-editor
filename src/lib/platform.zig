@@ -213,9 +213,9 @@ pub const Platform = struct {
     }
 
     pub fn drawSimpleBlock(self: Self, pos: Position, width: usize, height: usize, colour: Colour) !void {
+        const surface_bytes_per_pixel: u8 = @intCast(self.surface.?.format.*.BytesPerPixel);
         for (0..height) |j| {
             for (0..width) |i| {
-                const surface_bytes_per_pixel: u8 = @intCast(self.surface.?.format.*.BytesPerPixel);
                 std.debug.assert(surface_bytes_per_pixel == 4);
                 const adjusted_pos = .{ .x = pos.x + i, .y = pos.y + j };
                 self.setPixelColour(
