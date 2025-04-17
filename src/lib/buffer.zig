@@ -132,7 +132,7 @@ pub const Buffer = struct {
                 self.mode = .Insert;
                 self.handleMoveRight();
             },
-            else => std.debug.print("Unhandled normal mode text input code point {}\n", .{codePoint}),
+            else => {},
         }
     }
 
@@ -145,7 +145,7 @@ pub const Buffer = struct {
             c.SDLK_RIGHT => self.handleMoveRight(),
             c.SDLK_RETURN => try self.insertNewLine(),
             c.SDLK_BACKSPACE => try self.handleBackspace(),
-            else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
+            else => {},
         }
         return true;
     }
@@ -157,7 +157,7 @@ pub const Buffer = struct {
             c.SDLK_DOWN => self.handleMoveDown(),
             c.SDLK_LEFT => self.handleMoveLeft(),
             c.SDLK_RIGHT => self.handleMoveRight(),
-            else => std.debug.print("Unhandled insert mode keypress char {}\n", .{key}),
+            else => {},
         }
         return true;
     }

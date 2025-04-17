@@ -58,15 +58,31 @@ pub fn main() !void {
 
     var buffer = try pf.readFile(allocator, filepath, &font, font_size, @intCast(platform.surface.?.h));
 
+    // TODO-Matt: pull these into a State struct
     var running = true;
     var redraw_needed = true;
+
+    var flush_events_timestamp: f64 = 0;
+    var render_timestamp: ?f64 = null;
     while (running) {
+        platform.timer.reset();
         running = try buffer.flushUserEvents(&platform, &redraw_needed);
+        flush_events_timestamp = @as(f64, @floatFromInt(platform.timer.read())) / 1_000_000;
         if (redraw_needed) {
             platform.clear(bg_colour);
             try platform.drawBuffer(buffer, bg_colour, fg_colour);
             platform.renderScreen();
             redraw_needed = false;
+            render_timestamp = @as(f64, @floatFromInt(platform.timer.read())) / 1_000_000;
+        } else {
+            render_timestamp = null;
+        }
+
+        if (render_timestamp) |t| {
+            // TODO-Matt: can we do something to make tħis easier to keep track of?
+            //          - message to a thread that buffers these and tracks mean, median and centiles, have it dump to file on close?
+            //          - write warning to std_err if time goes above some threshold?
+            pf.print("flush_events_timestamp: {d:.6}millis\nrender_timestamp: {d:.6}millis\n\n", .{ flush_events_timestamp, t });
         }
     }
 

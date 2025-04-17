@@ -1,9 +1,12 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const Timer = std.time.Timer;
+
 const c = @cImport({
     @cInclude("SDL2/SDL.h");
     @cInclude("SDL2/SDL_ttf.h");
 });
+
 const Buffer = @import("buffer.zig").Buffer;
 const Font = @import("font.zig").Font;
 const Position = @import("position.zig").Position;
@@ -29,6 +32,7 @@ pub fn reportErr(comptime msg: []const u8, args: anytype) noreturn {
 pub const Platform = struct {
     window: ?*c.SDL_Window,
     surface: ?*c.SDL_Surface,
+    timer: Timer,
 
     const Self = @This();
 
@@ -43,9 +47,12 @@ pub const Platform = struct {
             reportErr("TTF_Init failed", .{});
         }
 
+        const timer = Timer.start() catch |err| reportErr("Timer.start failed - {}", .{err});
+
         return Self{
             .window = null,
             .surface = null,
+            .timer = timer,
         };
     }
 
