@@ -53,7 +53,7 @@ pub fn main() !void {
     _ = arg_iter.skip();
     const filepath = arg_iter.next() orelse std.debug.panic("Missing first argument\n", .{});
 
-    var buffer = try pf.readFile(allocator, filepath, &font, font_size);
+    var buffer = try pf.readFile(allocator, filepath, &font, font_size, @intCast(platform.surface.?.h));
 
     var running = true;
     var redraw_needed = true;

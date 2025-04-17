@@ -14,7 +14,6 @@ const c = @cImport({
     @cInclude("SDL2/SDL.h");
 });
 
-// TODO-Matt: support vertical buffer scrolling
 // TODO-Matt: support multiple open buffers
 pub const Buffer = struct {
     data: ArrayList(ArrayListU8),
@@ -26,6 +25,8 @@ pub const Buffer = struct {
     font_size: usize,
     mode: Mode,
     path: []const u8,
+    first_visible_line: usize,
+    screen_height: usize,
 
     const Self = @This();
 
@@ -34,7 +35,14 @@ pub const Buffer = struct {
         Insert,
     };
 
-    pub fn init(allocator: Allocator, reader: AnyReader, font: *Font, font_size: usize, path: []const u8) !Self {
+    pub fn init(
+        allocator: Allocator,
+        reader: AnyReader,
+        font: *Font,
+        font_size: usize,
+        path: []const u8,
+        screen_height: usize,
+    ) !Self {
         var lines = ArrayList(ArrayListU8).init(allocator);
         var char_widths = ArrayList(ArrayList(usize)).init(allocator);
         while (true) {
@@ -64,6 +72,8 @@ pub const Buffer = struct {
                         .font = font,
                         .font_size = font_size,
                         .path = path,
+                        .first_visible_line = 0,
+                        .screen_height = screen_height,
                     };
                 } else {
                     return err;
@@ -90,7 +100,7 @@ pub const Buffer = struct {
                 return false;
             } else if (event.type == c.SDL_WINDOWEVENT) {
                 redraw_needed.* = true;
-                p.handleWindowResized();
+                p.handleWindowResized(self);
             } else if (event.type == c.SDL_TEXTINPUT) {
                 redraw_needed.* = true;
                 const code_point_byte_count = try unicode.utf8ByteSequenceLength(event.text.text[0]);

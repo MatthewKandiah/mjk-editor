@@ -189,9 +189,20 @@ pub fn buildScenario(
     builder: *ScenarioBuilder,
     bg_colour: Colour,
     fg_colour: Colour,
+    screen_width: usize,
+    screen_height: usize,
 ) !platform.Platform {
     var p = platform.Platform.init();
-    const surface = c.SDL_CreateRGBSurface(0, 800, 600, 32, 0, 0, 0, 0) orelse platform.crash();
+    const surface = c.SDL_CreateRGBSurface(
+        0,
+        @intCast(screen_width),
+        @intCast(screen_height),
+        32,
+        0,
+        0,
+        0,
+        0,
+    ) orelse platform.crash();
     p.surface = @ptrCast(surface);
     p.clear(bg_colour);
 
@@ -218,8 +229,19 @@ pub fn screenshotTest(
     const bg_colour = Colour{ .r = 64, .g = 64, .b = 64 };
     const fg_colour = Colour{ .r = 255, .g = 255, .b = 255 };
 
-    var buffer = try platform.readFile(allocator, input_path, &font, font_size);
-    const p = try buildScenario(allocator, &buffer, builder, bg_colour, fg_colour);
+    const screenshot_screen_width = 800;
+    const screenshot_screen_height = 600;
+
+    var buffer = try platform.readFile(allocator, input_path, &font, font_size, screenshot_screen_height);
+    const p = try buildScenario(
+        allocator,
+        &buffer,
+        builder,
+        bg_colour,
+        fg_colour,
+        screenshot_screen_width,
+        screenshot_screen_height,
+    );
 
     if (generate) {
         try writeScreenshot(allocator, p, screenshot_name);

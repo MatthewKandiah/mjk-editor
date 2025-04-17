@@ -42,8 +42,9 @@ pub const Platform = struct {
         };
     }
 
-    pub fn handleWindowResized(self: *Self) void {
+    pub fn handleWindowResized(self: *Self, buffer: *Buffer) void {
         self.surface = c.SDL_GetWindowSurface(self.window.?);
+        buffer.screen_height = @intCast(self.surface.?.h);
     }
 
     pub fn print(self: Self, comptime fmt: []const u8, args: anytype) void {
@@ -229,17 +230,17 @@ pub fn crash() noreturn {
     std.process.exit(1);
 }
 
-pub fn readFile(allocator: Allocator, path: []const u8, font: *Font, font_size: usize) !Buffer {
+pub fn readFile(allocator: Allocator, path: []const u8, font: *Font, font_size: usize, screen_height: usize) !Buffer {
     const cwd = std.fs.cwd();
     if (cwd.openFile(path, std.fs.File.OpenFlags{ .mode = .read_only })) |file| {
         defer file.close();
-        return Buffer.init(allocator, file.reader().any(), font, font_size, path);
+        return Buffer.init(allocator, file.reader().any(), font, font_size, path, screen_height);
     } else |err| switch (err) {
         error.FileNotFound => {
             var buf: [0]u8 = .{};
             var fbs = std.io.fixedBufferStream(&buf);
             const reader = fbs.reader().any();
-            return Buffer.init(allocator, reader, font, font_size, path);
+            return Buffer.init(allocator, reader, font, font_size, path, screen_height);
         },
         else => std.debug.panic("Unexpected error reading file\n", .{}),
     }
