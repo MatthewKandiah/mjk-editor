@@ -96,6 +96,7 @@ pub const Platform = struct {
     pub fn drawBuffer(self: Self, buffer: Buffer, bg_colour: Colour, fg_colour: Colour) !void {
         var y_offset: usize = 0;
         for (buffer.data.items, 0..) |line, line_num| {
+            if (line_num < buffer.first_visible_line) continue;
             const utf8Data = Utf8String{ .data = line.items };
             const drawn_line_count = try self.drawUtf8String(
                 utf8Data,
@@ -111,6 +112,9 @@ pub const Platform = struct {
                 buffer.char_widths.items[line_num].items,
             );
             y_offset += buffer.font.height * drawn_line_count;
+            if (y_offset + buffer.font.height >= buffer.screen_height) {
+                return;
+            }
         }
     }
 

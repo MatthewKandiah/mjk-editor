@@ -234,12 +234,18 @@ pub const Buffer = struct {
     pub fn handleMoveUp(self: *Self) void {
         if (self.cursor_pos.y == 0) return;
         self.cursor_pos.y -= 1;
+        if (self.first_visible_line > self.cursor_pos.y) {
+            self.first_visible_line -= 1;
+        }
         self.setCursorToTargetX();
     }
 
     pub fn handleMoveDown(self: *Self) void {
         if (self.cursor_pos.y + 1 >= self.data.items.len) return;
         self.cursor_pos.y += 1;
+        if (self.cursor_pos.y - self.first_visible_line >= self.visibleLines()) {
+            self.first_visible_line += 1;
+        }
         self.setCursorToTargetX();
     }
 
@@ -311,5 +317,9 @@ pub const Buffer = struct {
 
         self.cursor_pos.x += 1;
         self.target_x_position += added_char.width;
+    }
+
+    fn visibleLines(self: Self) usize {
+        return self.screen_height / self.font.height;
     }
 };
