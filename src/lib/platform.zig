@@ -55,11 +55,15 @@ pub const Platform = struct {
         self.stderr.writer().print(fmt, args) catch {};
     }
 
+    pub fn reportErr(self: Self, comptime msg: []const u8, args: anytype) noreturn {
+        self.printErr("ERROR: " ++ msg ++ "\n", args);
+        crash();
+    }
+
     pub fn renderScreen(self: Self) void {
         const res = c.SDL_UpdateWindowSurface(self.window);
         if (res != 0) {
-            self.printErr("ERROR - Failed to render screen\n", .{});
-            crash();
+            self.reportErr("Failed to render screen", .{});
         }
     }
 
@@ -153,8 +157,7 @@ pub const Platform = struct {
             }
             const drawn_char_width = try self.drawCharacter(char, font, draw_pos, bg_colour, fg_colour);
             if (next_char_width != drawn_char_width) {
-                self.printErr("ASSERT: drawn character width did not match buffer data\n", .{});
-                crash();
+                self.reportErr("drawn character width did not match buffer data", .{});
             }
             if (maybe_cursor_x == x_index) {
                 try self.drawCursor(draw_pos, drawn_char_width, font.height, bg_colour, fg_colour, cursor_draw_type);

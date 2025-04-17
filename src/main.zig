@@ -26,13 +26,11 @@ pub fn main() !void {
         600,
         c.SDL_WINDOW_RESIZABLE,
     ) orelse {
-        platform.printErr("ERROR - Failed to create window\n", .{});
-        pf.crash();
+        platform.reportErr("Failed to create window", .{});
     };
 
     const surface = c.SDL_GetWindowSurface(window) orelse {
-        platform.printErr("ERROR - Failed to get window surface\n", .{});
-        pf.crash();
+        platform.reportErr("Failed to get window surface", .{});
     };
 
     platform.window = @ptrCast(window);
