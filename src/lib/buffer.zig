@@ -127,11 +127,12 @@ pub const Buffer = struct {
 
     fn handleTextInputNormal(self: *Self, codePoint: Utf8String.CodePoint) !void {
         switch (codePoint) {
-            'i' => self.mode = .Insert,
             'a' => {
                 self.mode = .Insert;
                 self.handleMoveRight();
             },
+            'i' => self.mode = .Insert,
+            'w' => try self.handleWordRight(),
             else => {},
         }
     }
@@ -184,6 +185,34 @@ pub const Buffer = struct {
         if (self.cursor_pos.x + 1 >= self.maxXPos()) return;
         self.cursor_pos.x += 1;
         self.updateTargetXPosition();
+    }
+
+    // TODO-Matt: fixme
+    pub fn handleWordRight(self: *Self) !void {
+        const current_line_data = self.data.items[self.cursor_pos.y].items;
+        const whole_line_utf8_string = Utf8String{ .data = current_line_data };
+        const byte_count_to_initial = try whole_line_utf8_string.byteCountToIndex(self.cursor_pos.x);
+        const end_of_line_utf8_string = Utf8String{ .data = current_line_data[byte_count_to_initial..] };
+        var iter = try end_of_line_utf8_string.iterate();
+        var check_codepoint = iter.next();
+        std.debug.print("moving through characters\n", .{});
+        while (check_codepoint != null and check_codepoint.? != ' ' and check_codepoint.? != '\t') {
+            if (check_codepoint) |char| {
+                std.debug.print("\t{c}\n", .{@as(u8, @intCast(char))});
+            }
+            self.handleMoveRight();
+            check_codepoint = iter.next();
+        }
+        self.handleMoveRight();
+        check_codepoint = iter.next();
+        std.debug.print("moving through whitespace\n", .{});
+        while (check_codepoint != null and check_codepoint.? == ' ' and check_codepoint.? == '\t') {
+            if (check_codepoint) |char| {
+                std.debug.print("\t{c}\n", .{@as(u8, @intCast(char))});
+            }
+            self.handleMoveRight();
+            check_codepoint = iter.next();
+        }
     }
 
     pub fn insertNewLine(self: *Self) !void {
